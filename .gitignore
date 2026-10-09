@@ -27,3 +27,6 @@ logs/
 # ===== Node (site) =====
 node_modules/
 dist/
+
+# ===== Qoder CLI (credentials) =====
+.qoder/
