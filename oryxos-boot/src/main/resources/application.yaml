@@ -1,0 +1,56 @@
+# OryxOS Application Configuration
+server:
+  port: 8080
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+
+  # SQLite DataSource
+  datasource:
+    url: jdbc:sqlite:.oryxos/oryxos.db
+    driver-class-name: org.sqlite.JDBC
+
+  # JPA / Hibernate
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+
+  # Flyway
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/sqlite
+    baseline-on-migrate: true
+
+# OryxOS Provider configuration
+oryxos:
+  providers: []
+  # Example:
+  # providers:
+  #   - name: deepseek
+  #     model: deepseek-chat
+  #     api-key-env: ORYXOS_PROVIDER_DEEPSEEK_API_KEY
+  #     base-url: https://api.deepseek.com
+  #   - name: kimi
+  #     model: moonshot-v1-8k
+  #     api-key-env: ORYXOS_PROVIDER_KIMI_API_KEY
+  #     base-url: https://api.moonshot.cn/v1
+
+  # Sandbox whitelist configuration
+  sandbox:
+    file:
+      allowed-paths: []
+    shell:
+      allowed-commands: []
+    http:
+      allowed-domains: []
+
+  # Memory configuration
+  memory:
+    backend: markdown
+    markdown:
+      path: .oryxos/memory/MEMORY.md

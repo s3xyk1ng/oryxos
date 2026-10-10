@@ -28,5 +28,11 @@ logs/
 node_modules/
 dist/
 
+# ===== Environment =====
+.env*
+
+# ===== Logs =====
+*.log
+
 # ===== Qoder CLI (credentials) =====
 .qoder/

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property name="LOG_DIR" value=".oryxos/logs"/>
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/oryxos.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/oryxos.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>200MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Key operation logging -->
+    <logger name="com.oryxos.core.react.ReActLoop" level="DEBUG"/>
+    <logger name="com.oryxos.core.react.ToolExecutor" level="DEBUG"/>
+    <logger name="com.oryxos.core.agent.AgentService" level="INFO"/>
+    <logger name="com.oryxos.core.agent.SessionManager" level="INFO"/>
+    <logger name="com.oryxos.core.scheduler.AgentScheduler" level="INFO"/>
+    <logger name="com.oryxos.provider" level="INFO"/>
+    <logger name="com.oryxos.tool" level="INFO"/>
+    <logger name="com.oryxos.memory" level="INFO"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>
