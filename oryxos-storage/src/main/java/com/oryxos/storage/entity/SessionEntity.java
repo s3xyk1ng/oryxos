@@ -37,30 +37,75 @@ public class SessionEntity {
 
     // --- Getters & Setters ---
 
-    public String getSessionId() { return sessionId; }
-    public void setSessionId(String sessionId) { this.sessionId = sessionId; }
+    public String getSessionId() {
+        return sessionId;
+    }
 
-    public String getProfileName() { return profileName; }
-    public void setProfileName(String profileName) { this.profileName = profileName; }
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
 
-    public String getChannel() { return channel; }
-    public void setChannel(String channel) { this.channel = channel; }
+    public String getProfileName() {
+        return profileName;
+    }
 
-    public String getUserId() { return userId; }
-    public void setUserId(String userId) { this.userId = userId; }
+    public void setProfileName(String profileName) {
+        this.profileName = profileName;
+    }
 
-    public String getMessagesJson() { return messagesJson; }
-    public void setMessagesJson(String messagesJson) { this.messagesJson = messagesJson; }
+    public String getChannel() {
+        return channel;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
 
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public String getUserId() {
+        return userId;
+    }
 
-    public Instant getLastActiveAt() { return lastActiveAt; }
-    public void setLastActiveAt(Instant lastActiveAt) { this.lastActiveAt = lastActiveAt; }
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
-    public Instant getArchivedAt() { return archivedAt; }
-    public void setArchivedAt(Instant archivedAt) { this.archivedAt = archivedAt; }
+    public String getMessagesJson() {
+        return messagesJson;
+    }
+
+    public void setMessagesJson(String messagesJson) {
+        this.messagesJson = messagesJson;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Instant getLastActiveAt() {
+        return lastActiveAt;
+    }
+
+    public void setLastActiveAt(Instant lastActiveAt) {
+        this.lastActiveAt = lastActiveAt;
+    }
+
+    public Instant getArchivedAt() {
+        return archivedAt;
+    }
+
+    public void setArchivedAt(Instant archivedAt) {
+        this.archivedAt = archivedAt;
+    }
 }

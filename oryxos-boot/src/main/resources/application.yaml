@@ -28,7 +28,11 @@ spring:
 
 # OryxOS Provider configuration
 oryxos:
-  providers: []
+  providers:
+    - name: deepseek
+      type: openai-compatible
+      api-key: ${DEEPSEEK_API_KEY}
+      base-url: https://api.deepseek.com
   # Example:
   # providers:
   #   - name: deepseek
@@ -54,3 +58,24 @@ oryxos:
     backend: markdown
     markdown:
       path: .oryxos/memory/MEMORY.md
+
+# Management (Actuator + Prometheus)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db
+      show-details: when-authorized
+    info:
+      enabled: true
+    prometheus:
+      enabled: true
+  # Endpoint auth/isolation left for deployment phase
+  # TODO: configure management.server.port for isolated management network in production

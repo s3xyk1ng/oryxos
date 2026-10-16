@@ -2,17 +2,14 @@ package com.oryxos.tool;
 
 import com.oryxos.core.agent.ToolRegistry;
 import com.oryxos.core.model.OryxTool;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
-/**
- * 启动时自动将容器中所有 OryxTool Bean 注册到 ToolRegistry。
- */
+/** 启动时自动将容器中所有 OryxTool Bean 注册到 ToolRegistry。 */
 @Component
 public class ToolAutoRegistrar implements ApplicationRunner {
 
@@ -29,7 +26,9 @@ public class ToolAutoRegistrar implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         toolRegistry.registerAll(tools);
-        log.info("Auto-registered {} tools: {}", tools.size(),
+        log.info(
+                "Auto-registered {} tools: {}",
+                tools.size(),
                 tools.stream().map(OryxTool::getName).toList());
     }
 }

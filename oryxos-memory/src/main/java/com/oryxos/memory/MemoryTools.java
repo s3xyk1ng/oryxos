@@ -2,17 +2,12 @@ package com.oryxos.memory;
 
 import com.oryxos.core.model.OryxTool;
 import com.oryxos.core.model.ToolResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.stereotype.Component;
 
-/**
- * 记忆工具：save_memory 和 recall_memory，注册到 ToolRegistry 供 Agent 调用。
- */
+/** 记忆工具：save_memory 和 recall_memory，注册到 ToolRegistry 供 Agent 调用。 */
 @Component
 public class MemoryTools {
 
@@ -25,7 +20,9 @@ public class MemoryTools {
     @Component("saveMemoryTool")
     public class SaveMemoryTool implements OryxTool {
         @Override
-        public String getName() { return "save_memory"; }
+        public String getName() {
+            return "save_memory";
+        }
 
         @Override
         public String getDescription() {
@@ -39,11 +36,17 @@ public class MemoryTools {
             Map<String, Object> schema = new LinkedHashMap<>();
             schema.put("type", "object");
             Map<String, Object> props = new LinkedHashMap<>();
-            props.put("content", Map.of("type", "string",
-                    "description", "The information to save"));
-            props.put("scope", Map.of("type", "string",
-                    "description", "Memory scope: CORE or ARCHIVAL (default: ARCHIVAL)",
-                    "enum", List.of("CORE", "ARCHIVAL")));
+            props.put(
+                    "content", Map.of("type", "string", "description", "The information to save"));
+            props.put(
+                    "scope",
+                    Map.of(
+                            "type",
+                            "string",
+                            "description",
+                            "Memory scope: CORE or ARCHIVAL (default: ARCHIVAL)",
+                            "enum",
+                            List.of("CORE", "ARCHIVAL")));
             schema.put("properties", props);
             schema.put("required", List.of("content"));
             return schema;
@@ -70,7 +73,9 @@ public class MemoryTools {
     @Component("recallMemoryTool")
     public class RecallMemoryTool implements OryxTool {
         @Override
-        public String getName() { return "recall_memory"; }
+        public String getName() {
+            return "recall_memory";
+        }
 
         @Override
         public String getDescription() {
@@ -82,8 +87,9 @@ public class MemoryTools {
             Map<String, Object> schema = new LinkedHashMap<>();
             schema.put("type", "object");
             Map<String, Object> props = new LinkedHashMap<>();
-            props.put("query", Map.of("type", "string",
-                    "description", "Keyword to search for in memory"));
+            props.put(
+                    "query",
+                    Map.of("type", "string", "description", "Keyword to search for in memory"));
             schema.put("properties", props);
             schema.put("required", List.of("query"));
             return schema;
@@ -99,8 +105,8 @@ public class MemoryTools {
             if (results.isEmpty()) {
                 return ToolResult.ok("No memories found for: " + query);
             }
-            return ToolResult.ok("Found " + results.size() + " memories:\n"
-                    + String.join("\n", results));
+            return ToolResult.ok(
+                    "Found " + results.size() + " memories:\n" + String.join("\n", results));
         }
     }
 }

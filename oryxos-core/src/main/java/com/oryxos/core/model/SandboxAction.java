@@ -1,12 +1,13 @@
 package com.oryxos.core.model;
 
-/**
- * Sandbox 动作定义。
- */
+/** Sandbox 动作定义。 */
 public class SandboxAction {
 
     public enum ActionType {
-        FILE_READ, FILE_WRITE, SHELL_COMMAND, HTTP_REQUEST
+        FILE_READ,
+        FILE_WRITE,
+        SHELL_COMMAND,
+        HTTP_REQUEST
     }
 
     private final ActionType type;
@@ -17,6 +18,11 @@ public class SandboxAction {
         this.target = target;
     }
 
-    public ActionType getType() { return type; }
-    public String getTarget() { return target; }
+    public ActionType getType() {
+        return type;
+    }
+
+    public String getTarget() {
+        return target;
+    }
 }

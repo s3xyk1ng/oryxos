@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <property name="LOG_DIR" value=".oryxos/logs"/>
-    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
 
+    <!-- Plain text pattern with MDC fields (traceId, sessionId, agentName) -->
+    <property name="TEXT_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-}/%X{sessionId:-}/%X{agentName:-}] %logger{36} - %msg%n"/>
+
+    <!-- ======================== Console Appender ======================== -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
+            <pattern>${TEXT_PATTERN}</pattern>
         </encoder>
     </appender>
 
+    <!-- ======================== File Appender ======================== -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/oryxos.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
@@ -18,11 +23,38 @@
             <totalSizeCap>200MB</totalSizeCap>
         </rollingPolicy>
         <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
+            <pattern>${TEXT_PATTERN}</pattern>
         </encoder>
     </appender>
 
-    <!-- Key operation logging -->
+    <!-- ======================== JSON Profile (structured) ======================== -->
+    <!--
+        Activate with: spring.profiles.active=json
+        Requires dependency: net.logstash.logback:logstash-logback-encoder:7.4
+    -->
+    <springProfile name="json">
+        <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <includeMdcKeyName>traceId</includeMdcKeyName>
+                <includeMdcKeyName>sessionId</includeMdcKeyName>
+                <includeMdcKeyName>agentName</includeMdcKeyName>
+                <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS</timestampPattern>
+            </encoder>
+        </appender>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_JSON"/>
+        </root>
+    </springProfile>
+
+    <!-- ======================== Default Profile ======================== -->
+    <springProfile name="default">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+    <!-- ======================== Key Operation Logging ======================== -->
     <logger name="com.oryxos.core.react.ReActLoop" level="DEBUG"/>
     <logger name="com.oryxos.core.react.ToolExecutor" level="DEBUG"/>
     <logger name="com.oryxos.core.agent.AgentService" level="INFO"/>
@@ -31,9 +63,12 @@
     <logger name="com.oryxos.provider" level="INFO"/>
     <logger name="com.oryxos.tool" level="INFO"/>
     <logger name="com.oryxos.memory" level="INFO"/>
+    <logger name="com.oryxos.web" level="INFO"/>
 
-    <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="FILE"/>
-    </root>
+    <!--
+        MDC Convention:
+        - Entry layer (Filter/Interceptor/CLI command) writes: traceId, sessionId, agentName
+        - Business code is unaware; MDC.clear() in finally block
+        - agentName: distinguishes logs from different Agents
+    -->
 </configuration>

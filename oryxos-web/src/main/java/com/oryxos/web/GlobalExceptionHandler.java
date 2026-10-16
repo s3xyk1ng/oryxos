@@ -7,9 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * 全局异常处理器：统一异常映射到 ApiResponse。
- */
+/** 全局异常处理器：统一异常映射到 ApiResponse。 */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -41,9 +39,7 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(500, "Internal server error: " + e.getMessage()));
     }
 
-    /**
-     * 404 资源未找到异常。
-     */
+    /** 404 资源未找到异常。 */
     public static class ResourceNotFoundException extends RuntimeException {
         public ResourceNotFoundException(String message) {
             super(message);

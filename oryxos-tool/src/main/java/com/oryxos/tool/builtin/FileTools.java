@@ -2,10 +2,6 @@ package com.oryxos.tool.builtin;
 
 import com.oryxos.core.model.OryxTool;
 import com.oryxos.core.model.ToolResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.LinkedHashMap;
@@ -13,10 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
-/**
- * 内置文件操作工具：read_file、write_file、list_dir。
- */
+/** 内置文件操作工具：read_file、write_file、list_dir。 */
 @Component
 public class FileTools {
 
@@ -25,18 +22,24 @@ public class FileTools {
     @Component("readFileTool")
     public static class ReadFileTool implements OryxTool {
         @Override
-        public String getName() { return "read_file"; }
+        public String getName() {
+            return "read_file";
+        }
 
         @Override
-        public String getDescription() { return "Read the content of a file at the given path."; }
+        public String getDescription() {
+            return "Read the content of a file at the given path.";
+        }
 
         @Override
         public Map<String, Object> getInputSchema() {
             Map<String, Object> schema = new LinkedHashMap<>();
             schema.put("type", "object");
-            schema.put("properties", Map.of(
-                    "path", Map.of("type", "string", "description", "The file path to read")
-            ));
+            schema.put(
+                    "properties",
+                    Map.of(
+                            "path",
+                            Map.of("type", "string", "description", "The file path to read")));
             schema.put("required", List.of("path"));
             return schema;
         }
@@ -66,19 +69,34 @@ public class FileTools {
     @Component("writeFileTool")
     public static class WriteFileTool implements OryxTool {
         @Override
-        public String getName() { return "write_file"; }
+        public String getName() {
+            return "write_file";
+        }
 
         @Override
-        public String getDescription() { return "Write content to a file at the given path. Creates parent directories if needed."; }
+        public String getDescription() {
+            return "Write content to a file at the given path. Creates parent directories if needed.";
+        }
 
         @Override
         public Map<String, Object> getInputSchema() {
             Map<String, Object> schema = new LinkedHashMap<>();
             schema.put("type", "object");
-            schema.put("properties", Map.of(
-                    "path", Map.of("type", "string", "description", "The file path to write to"),
-                    "content", Map.of("type", "string", "description", "The content to write")
-            ));
+            schema.put(
+                    "properties",
+                    Map.of(
+                            "path",
+                                    Map.of(
+                                            "type",
+                                            "string",
+                                            "description",
+                                            "The file path to write to"),
+                            "content",
+                                    Map.of(
+                                            "type",
+                                            "string",
+                                            "description",
+                                            "The content to write")));
             schema.put("required", List.of("path", "content"));
             return schema;
         }
@@ -105,19 +123,30 @@ public class FileTools {
     @Component("listDirTool")
     public static class ListDirTool implements OryxTool {
         @Override
-        public String getName() { return "list_dir"; }
+        public String getName() {
+            return "list_dir";
+        }
 
         @Override
-        public String getDescription() { return "List files and directories in the given path."; }
+        public String getDescription() {
+            return "List files and directories in the given path.";
+        }
 
         @Override
         public Map<String, Object> getInputSchema() {
             Map<String, Object> schema = new LinkedHashMap<>();
             schema.put("type", "object");
-            schema.put("properties", Map.of(
-                    "path", Map.of("type", "string", "description", "The directory path to list",
-                            "default", ".")
-            ));
+            schema.put(
+                    "properties",
+                    Map.of(
+                            "path",
+                            Map.of(
+                                    "type",
+                                    "string",
+                                    "description",
+                                    "The directory path to list",
+                                    "default",
+                                    ".")));
             schema.put("required", List.of());
             return schema;
         }
@@ -131,12 +160,16 @@ public class FileTools {
                     return ToolResult.fail("Not a directory: " + path, false);
                 }
                 try (Stream<Path> stream = Files.list(p)) {
-                    String listing = stream
-                            .map(fp -> {
-                                String type = Files.isDirectory(fp) ? "[DIR] " : "[FILE] ";
-                                return type + fp.getFileName().toString();
-                            })
-                            .collect(Collectors.joining("\n"));
+                    String listing =
+                            stream.map(
+                                            fp -> {
+                                                String type =
+                                                        Files.isDirectory(fp)
+                                                                ? "[DIR] "
+                                                                : "[FILE] ";
+                                                return type + fp.getFileName().toString();
+                                            })
+                                    .collect(Collectors.joining("\n"));
                     return ToolResult.ok(listing.isEmpty() ? "(empty directory)" : listing);
                 }
             } catch (IOException e) {

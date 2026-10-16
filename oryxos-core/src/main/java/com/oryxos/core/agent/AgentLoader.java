@@ -2,20 +2,16 @@ package com.oryxos.core.agent;
 
 import com.oryxos.core.context.ConfigLoader;
 import com.oryxos.core.model.Profile;
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.*;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.IOException;
-import java.nio.file.*;
-import java.util.*;
-import java.util.stream.Stream;
-
-/**
- * Agent 加载器：扫描 .oryxos/agents/ 目录，解析 AGENT.md frontmatter 生成 Profile，
- * 注册到 ProfileRegistry。
- */
+/** Agent 加载器：扫描 .oryxos/agents/ 目录，解析 AGENT.md frontmatter 生成 Profile， 注册到 ProfileRegistry。 */
 @Component
 public class AgentLoader {
 
@@ -41,13 +37,18 @@ public class AgentLoader {
         }
 
         try (Stream<Path> dirs = Files.list(agentsDir)) {
-            dirs.filter(Files::isDirectory).forEach(agentDir -> {
-                try {
-                    loadAgent(agentDir);
-                } catch (Exception e) {
-                    log.error("Failed to load agent from {}: {}", agentDir, e.getMessage());
-                }
-            });
+            dirs.filter(Files::isDirectory)
+                    .forEach(
+                            agentDir -> {
+                                try {
+                                    loadAgent(agentDir);
+                                } catch (Exception e) {
+                                    log.error(
+                                            "Failed to load agent from {}: {}",
+                                            agentDir,
+                                            e.getMessage());
+                                }
+                            });
         } catch (IOException e) {
             log.error("Failed to scan agents directory: {}", e.getMessage());
         }
@@ -74,9 +75,7 @@ public class AgentLoader {
         log.info("Loaded agent: {} from {}", profile.getName(), agentDir);
     }
 
-    /**
-     * 从 AGENT.md frontmatter 派生 Profile。
-     */
+    /** 从 AGENT.md frontmatter 派生 Profile。 */
     public Profile deriveProfile(Map<String, Object> frontmatter) {
         Profile profile = new Profile();
         profile.setName((String) frontmatter.get("name"));
@@ -137,9 +136,7 @@ public class AgentLoader {
         return profile;
     }
 
-    /**
-     * 解析 Markdown frontmatter（--- 包裹的 YAML）。
-     */
+    /** 解析 Markdown frontmatter（--- 包裹的 YAML）。 */
     @SuppressWarnings("unchecked")
     private Map<String, Object> parseFrontmatter(String content) {
         if (!content.startsWith("---")) return null;

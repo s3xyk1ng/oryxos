@@ -54,6 +54,24 @@
 
         <!-- MCP -->
         <mcp-sdk.version>0.7.0</mcp-sdk.version>
+
+        <!-- Quality plugins -->
+        <spotless.version>2.43.0</spotless.version>
+        <google-java-format.version>1.19.2</google-java-format.version>
+        <p3c-pmd.version>10.7.0</p3c-pmd.version>
+        <checkstyle.version>3.3.1</checkstyle.version>
+        <spotbugs.version>4.8.3.1</spotbugs.version>
+        <findsecbugs.version>1.13.0</findsecbugs.version>
+        <pmd.version>3.21.2</pmd.version>
+        <jacoco.version>0.8.11</jacoco.version>
+        <owasp.version>9.0.9</owasp.version>
+
+        <!-- Quality skip switches -->
+        <spotless.check.skip>false</spotless.check.skip>
+        <checkstyle.skip>false</checkstyle.skip>
+        <spotbugs.skip>false</spotbugs.skip>
+        <pmd.skip>false</pmd.skip>
+        <owasp.skip>false</owasp.skip>
     </properties>
 
     <dependencyManagement>
@@ -154,6 +172,110 @@
     </repositories>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <!-- STEP 2: Spotless + google-java-format (AOSP 4-space) -->
+                <plugin>
+                    <groupId>com.diffplug.spotless</groupId>
+                    <artifactId>spotless-maven-plugin</artifactId>
+                    <version>${spotless.version}</version>
+                    <configuration>
+                        <java>
+                            <googleJavaFormat>
+                                <version>${google-java-format.version}</version>
+                                <style>AOSP</style>
+                            </googleJavaFormat>
+                        </java>
+                        <skip>${spotless.check.skip}</skip>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>spotless-check</id>
+                            <phase>validate</phase>
+                            <goals><goal>check</goal></goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!-- STEP 3: P3C (Alibaba Java Coding Guidelines) -->
+                <plugin>
+                    <groupId>com.alibaba.p3c</groupId>
+                    <artifactId>p3c-pmd</artifactId>
+                    <version>${p3c-pmd.version}</version>
+                </plugin>
+
+                <!-- STEP 4: Checkstyle (Google Java Style base) -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>${checkstyle.version}</version>
+                    <configuration>
+                        <configLocation>config/checkstyle/checkstyle-google.xml</configLocation>
+                        <consoleOutput>true</consoleOutput>
+                        <failsOnError>false</failsOnError>
+                        <skip>${checkstyle.skip}</skip>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.puppycrawl.tools</groupId>
+                            <artifactId>checkstyle</artifactId>
+                            <version>10.14.0</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+
+                <!-- STEP 5: SpotBugs + FindSecBugs -->
+                <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>${spotbugs.version}</version>
+                    <configuration>
+                        <effort>Max</effort>
+                        <threshold>Low</threshold>
+                        <xmlOutput>true</xmlOutput>
+                        <skip>${spotbugs.skip}</skip>
+                        <excludeFilterFile>config/spotbugs/exclude.xml</excludeFilterFile>
+                        <plugins>
+                            <plugin>
+                                <groupId>com.h3xstream.findsecbugs</groupId>
+                                <artifactId>findsecbugs-plugin</artifactId>
+                                <version>${findsecbugs.version}</version>
+                            </plugin>
+                        </plugins>
+                    </configuration>
+                </plugin>
+
+                <!-- STEP 6: PMD -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>${pmd.version}</version>
+                    <configuration>
+                        <skip>${pmd.skip}</skip>
+                        <targetJdk>20</targetJdk>
+                    </configuration>
+                </plugin>
+
+                <!-- STEP 8: JaCoCo -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                    <executions>
+                        <execution>
+                            <id>prepare-agent</id>
+                            <goals><goal>prepare-agent</goal></goals>
+                        </execution>
+                        <execution>
+                            <id>report</id>
+                            <phase>verify</phase>
+                            <goals><goal>report</goal></goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -166,6 +288,75 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
+
+            <!-- Active quality plugins for all modules -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>checkstyle-verify</id>
+                        <phase>verify</phase>
+                        <goals><goal>check</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>spotbugs-verify</id>
+                        <phase>verify</phase>
+                        <goals><goal>check</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>pmd-verify</id>
+                        <phase>verify</phase>
+                        <goals><goal>check</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
+
+    <!-- STEP 7: OWASP Dependency-Check (opt-in via -Psecurity) -->
+    <profiles>
+        <profile>
+            <id>security</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <version>${owasp.version}</version>
+                        <configuration>
+                            <failBuildOnCVSS>7</failBuildOnCVSS>
+                            <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+                            <skip>${owasp.skip}</skip>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals><goal>check</goal></goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

@@ -3,13 +3,10 @@ package com.oryxos.web.controller;
 import com.oryxos.core.scheduler.AgentScheduler;
 import com.oryxos.core.scheduler.ScheduledTaskStore;
 import com.oryxos.web.dto.ApiResponse;
+import java.util.Map;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
-/**
- * 定时任务管理 API (v2)。
- */
+/** 定时任务管理 API (v2)。 */
 @RestController
 public class ScheduleApiController {
 
@@ -45,8 +42,8 @@ public class ScheduleApiController {
     }
 
     @PutMapping("/api/v2/schedules/{taskKey}")
-    public ApiResponse<String> updateSchedule(@PathVariable String taskKey,
-                                              @RequestBody Map<String, Object> body) {
+    public ApiResponse<String> updateSchedule(
+            @PathVariable String taskKey, @RequestBody Map<String, Object> body) {
         Object enabled = body.get("enabled");
         if (enabled instanceof Boolean b) {
             scheduler.setEnabled(taskKey, b);
@@ -56,8 +53,8 @@ public class ScheduleApiController {
     }
 
     @PostMapping("/api/v2/agents/{name}/schedules/{key}/run")
-    public ApiResponse<String> runAgentSchedule(@PathVariable String name,
-                                                @PathVariable String key) {
+    public ApiResponse<String> runAgentSchedule(
+            @PathVariable String name, @PathVariable String key) {
         String taskKey = name + ":" + key;
         scheduler.runNow(taskKey, name, "Execute scheduled task");
         return ApiResponse.ok("Agent schedule executed: " + taskKey);

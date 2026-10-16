@@ -3,13 +3,10 @@ package com.oryxos.web.controller;
 import com.oryxos.core.agent.ProfileRegistry;
 import com.oryxos.core.model.Profile;
 import com.oryxos.web.dto.ApiResponse;
+import java.util.Collection;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
-
-/**
- * Profile API：列出所有 Profile。
- */
+/** Profile API：列出所有 Profile。 */
 @RestController
 @RequestMapping("/api/v1/profiles")
 public class ProfileApiController {

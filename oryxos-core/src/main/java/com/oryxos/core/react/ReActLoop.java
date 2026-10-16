@@ -2,18 +2,16 @@ package com.oryxos.core.react;
 
 import com.oryxos.core.agent.AuditPort;
 import com.oryxos.core.model.*;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 /**
- * ReAct 循环：Agent 大脑。
- * 流程：组装 Prompt → 调用 LLM → 解析 tool calls → 执行 Tool → 追加结果 → 循环。
- * 无 tool call 时终止，达到 MAX_ITERATIONS 时强制终止。
+ * ReAct 循环：Agent 大脑。 流程：组装 Prompt → 调用 LLM → 解析 tool calls → 执行 Tool → 追加结果 → 循环。 无 tool call
+ * 时终止，达到 MAX_ITERATIONS 时强制终止。
  */
 @Component
 public class ReActLoop {
@@ -30,20 +28,27 @@ public class ReActLoop {
         this.auditPort = auditPort;
     }
 
-    /**
-     * 执行 ReAct 循环。
-     */
-    public String run(Session session, LlmPort llm, Profile profile,
-                      List<OryxTool> tools, String userMessage) {
+    /** 执行 ReAct 循环。 */
+    public String run(
+            Session session,
+            LlmPort llm,
+            Profile profile,
+            List<OryxTool> tools,
+            String userMessage) {
         int maxIterations = profile.getMaxIterations();
         session.addMessage(new Message("user", userMessage));
 
         for (int iteration = 0; iteration < maxIterations; iteration++) {
-            log.debug("ReAct iteration {}/{} for session {}", iteration + 1, maxIterations, session.getSessionId());
+            log.debug(
+                    "ReAct iteration {}/{} for session {}",
+                    iteration + 1,
+                    maxIterations,
+                    session.getSessionId());
 
             // Build prompt
             String systemPrompt = promptBuilder.buildSystemPrompt(profile, session);
-            Prompt prompt = promptBuilder.buildChatPrompt(systemPrompt, session.getMessages(), tools);
+            Prompt prompt =
+                    promptBuilder.buildChatPrompt(systemPrompt, session.getMessages(), tools);
 
             // Call LLM
             long llmStart = System.currentTimeMillis();
@@ -67,13 +72,18 @@ public class ReActLoop {
             for (ToolCallRequest tc : toolCalls) {
                 log.debug("Executing tool: {} (iteration {})", tc.getToolName(), iteration + 1);
                 ToolResult result = toolExecutor.execute(session, tc, tools);
-                String resultContent = result.isSuccess() ? result.getContent() : "Error: " + result.getError();
-                session.addMessage(new Message("tool", "[" + tc.getToolName() + "] " + resultContent));
+                String resultContent =
+                        result.isSuccess() ? result.getContent() : "Error: " + result.getError();
+                session.addMessage(
+                        new Message("tool", "[" + tc.getToolName() + "] " + resultContent));
             }
         }
 
         // Max iterations reached
-        log.warn("Max iterations ({}) reached for session {}", maxIterations, session.getSessionId());
+        log.warn(
+                "Max iterations ({}) reached for session {}",
+                maxIterations,
+                session.getSessionId());
         List<Message> messages = session.getMessages();
         for (int i = messages.size() - 1; i >= 0; i--) {
             if ("assistant".equals(messages.get(i).getRole())) {
@@ -83,14 +93,20 @@ public class ReActLoop {
         return "I've reached the maximum number of steps.";
     }
 
-    private void recordLlmAudit(Session session, LlmPort llm, ChatResponse response, long duration) {
+    private void recordLlmAudit(
+            Session session, LlmPort llm, ChatResponse response, long duration) {
         try {
             var metadata = response.getMetadata();
             var usage = metadata.getUsage();
             int promptTokens = usage != null ? (int) usage.getPromptTokens() : 0;
             int completionTokens = usage != null ? (int) usage.getCompletionTokens() : 0;
-            auditPort.recordLlmCall(session.getSessionId(), llm.getProviderName(),
-                    llm.getModelName(), promptTokens, completionTokens, duration);
+            auditPort.recordLlmCall(
+                    session.getSessionId(),
+                    llm.getProviderName(),
+                    llm.getModelName(),
+                    promptTokens,
+                    completionTokens,
+                    duration);
         } catch (Exception e) {
             log.warn("Failed to record LLM audit: {}", e.getMessage());
         }

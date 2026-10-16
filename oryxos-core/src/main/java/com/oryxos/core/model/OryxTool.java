@@ -3,9 +3,8 @@ package com.oryxos.core.model;
 import java.util.Map;
 
 /**
- * 统一工具接口。所有工具——内置 Tool、@Tool 注解的 Plugin Tool、MCP Tool——
- * 必须包装为 OryxTool 实例注册到 ToolRegistry。
- * ReAct 循环不感知 Tool 来源。
+ * 统一工具接口。所有工具——内置 Tool、@Tool 注解的 Plugin Tool、MCP Tool—— 必须包装为 OryxTool 实例注册到 ToolRegistry。 ReAct
+ * 循环不感知 Tool 来源。
  */
 public interface OryxTool {
 

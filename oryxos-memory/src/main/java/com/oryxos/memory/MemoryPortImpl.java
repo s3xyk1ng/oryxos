@@ -3,9 +3,7 @@ package com.oryxos.memory;
 import com.oryxos.core.react.MemoryPort;
 import org.springframework.stereotype.Component;
 
-/**
- * MemoryPort 实现：委托 MemoryService 获取长期记忆上下文。
- */
+/** MemoryPort 实现：委托 MemoryService 获取长期记忆上下文。 */
 @Component
 public class MemoryPortImpl implements MemoryPort {
 

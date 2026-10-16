@@ -2,10 +2,6 @@ package com.oryxos.tool.builtin;
 
 import com.oryxos.core.model.OryxTool;
 import com.oryxos.core.model.ToolResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.LinkedHashMap;
@@ -13,10 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
-/**
- * 内置 Shell 工具：执行系统命令（不经 Shell 解释器，带超时控制）。
- */
+/** 内置 Shell 工具：执行系统命令（不经 Shell 解释器，带超时控制）。 */
 @Component
 public class ShellTools {
 
@@ -27,7 +24,9 @@ public class ShellTools {
     public static class ShellTool implements OryxTool {
 
         @Override
-        public String getName() { return "shell"; }
+        public String getName() {
+            return "shell";
+        }
 
         @Override
         public String getDescription() {
@@ -40,13 +39,25 @@ public class ShellTools {
             Map<String, Object> schema = new LinkedHashMap<>();
             schema.put("type", "object");
             Map<String, Object> props = new LinkedHashMap<>();
-            props.put("command", Map.of("type", "string",
-                    "description", "The executable command to run (e.g., 'ls', 'git', 'python')"));
-            props.put("args", Map.of("type", "array",
-                    "description", "Command arguments as an array of strings",
-                    "items", Map.of("type", "string")));
-            props.put("timeout", Map.of("type", "integer",
-                    "description", "Timeout in seconds (default: 30)"));
+            props.put(
+                    "command",
+                    Map.of(
+                            "type",
+                            "string",
+                            "description",
+                            "The executable command to run (e.g., 'ls', 'git', 'python')"));
+            props.put(
+                    "args",
+                    Map.of(
+                            "type",
+                            "array",
+                            "description",
+                            "Command arguments as an array of strings",
+                            "items",
+                            Map.of("type", "string")));
+            props.put(
+                    "timeout",
+                    Map.of("type", "integer", "description", "Timeout in seconds (default: 30)"));
             schema.put("properties", props);
             schema.put("required", List.of("command"));
             return schema;
@@ -61,9 +72,10 @@ public class ShellTools {
             }
 
             List<String> argList = (List<String>) input.getOrDefault("args", List.of());
-            int timeout = input.containsKey("timeout")
-                    ? ((Number) input.get("timeout")).intValue()
-                    : DEFAULT_TIMEOUT_SECONDS;
+            int timeout =
+                    input.containsKey("timeout")
+                            ? ((Number) input.get("timeout")).intValue()
+                            : DEFAULT_TIMEOUT_SECONDS;
 
             // Build command list (no shell interpreter)
             List<String> cmdList = new java.util.ArrayList<>();
@@ -76,8 +88,8 @@ public class ShellTools {
                 Process process = pb.start();
 
                 String output;
-                try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(process.getInputStream()))) {
+                try (BufferedReader reader =
+                        new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                     output = reader.lines().collect(Collectors.joining("\n"));
                 }
 

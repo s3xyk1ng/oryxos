@@ -9,7 +9,7 @@ public class TaskExecutionEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @Column(name = "task_key", length = 128, nullable = false)
     private String taskKey;
@@ -18,7 +18,7 @@ public class TaskExecutionEntity {
     private String sessionId;
 
     @Column(name = "status", length = 16, nullable = false)
-    private String status;  // RUNNING / SUCCESS / FAILED
+    private String status; // RUNNING / SUCCESS / FAILED
 
     @Column(name = "result", columnDefinition = "TEXT")
     private String result;
@@ -30,18 +30,59 @@ public class TaskExecutionEntity {
     private Instant finishedAt;
 
     // --- Getters & Setters ---
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getTaskKey() { return taskKey; }
-    public void setTaskKey(String taskKey) { this.taskKey = taskKey; }
-    public String getSessionId() { return sessionId; }
-    public void setSessionId(String sessionId) { this.sessionId = sessionId; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-    public String getResult() { return result; }
-    public void setResult(String result) { this.result = result; }
-    public Instant getStartedAt() { return startedAt; }
-    public void setStartedAt(Instant startedAt) { this.startedAt = startedAt; }
-    public Instant getFinishedAt() { return finishedAt; }
-    public void setFinishedAt(Instant finishedAt) { this.finishedAt = finishedAt; }
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getTaskKey() {
+        return taskKey;
+    }
+
+    public void setTaskKey(String taskKey) {
+        this.taskKey = taskKey;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getResult() {
+        return result;
+    }
+
+    public void setResult(String result) {
+        this.result = result;
+    }
+
+    public Instant getStartedAt() {
+        return startedAt;
+    }
+
+    public void setStartedAt(Instant startedAt) {
+        this.startedAt = startedAt;
+    }
+
+    public Instant getFinishedAt() {
+        return finishedAt;
+    }
+
+    public void setFinishedAt(Instant finishedAt) {
+        this.finishedAt = finishedAt;
+    }
 }

@@ -1,8 +1,6 @@
 package com.oryxos.core.model;
 
-/**
- * 工具执行结果。
- */
+/** 工具执行结果。 */
 public class ToolResult {
 
     private boolean success;
@@ -28,8 +26,19 @@ public class ToolResult {
         return r;
     }
 
-    public boolean isSuccess() { return success; }
-    public String getContent() { return content; }
-    public String getError() { return error; }
-    public boolean isRetryable() { return retryable; }
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public boolean isRetryable() {
+        return retryable;
+    }
 }

@@ -1,18 +1,13 @@
 package com.oryxos.core.context;
 
-import com.oryxos.core.model.Profile;
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.nio.file.*;
-import java.util.*;
-
-/**
- * 上下文加载器：加载 Bootstrap 文件（AGENTS.md/SOUL.md/USER.md）、
- * AGENT.md 正文、Skill 元数据。每次现读不缓存。
- */
+/** 上下文加载器：加载 Bootstrap 文件（AGENTS.md/SOUL.md/USER.md）、 AGENT.md 正文、Skill 元数据。每次现读不缓存。 */
 @Component
 public class ContextLoader {
 
@@ -28,9 +23,7 @@ public class ContextLoader {
         this.workspaceRoot = workspaceRoot;
     }
 
-    /**
-     * 加载 Bootstrap 文件内容（AGENTS.md + SOUL.md + USER.md），拼接为字符串。
-     */
+    /** 加载 Bootstrap 文件内容（AGENTS.md + SOUL.md + USER.md），拼接为字符串。 */
     public String loadBootstrap() {
         StringBuilder sb = new StringBuilder();
         Path oryxosDir = workspaceRoot.resolve(".oryxos");
@@ -48,12 +41,14 @@ public class ContextLoader {
         return sb.toString().trim();
     }
 
-    /**
-     * 加载指定 Agent 的 AGENT.md 正文（去掉 frontmatter）。
-     */
+    /** 加载指定 Agent 的 AGENT.md 正文（去掉 frontmatter）。 */
     public String loadAgentBody(String agentName) {
-        Path agentMd = workspaceRoot.resolve(".oryxos").resolve("agents")
-                .resolve(agentName).resolve("AGENT.md");
+        Path agentMd =
+                workspaceRoot
+                        .resolve(".oryxos")
+                        .resolve("agents")
+                        .resolve(agentName)
+                        .resolve("AGENT.md");
         if (!Files.exists(agentMd)) {
             return "";
         }
@@ -73,14 +68,15 @@ public class ContextLoader {
         }
     }
 
-    /**
-     * 扫描 Agent 的 skills/ 软连接，注入 Skill 元数据（name/description/path）。
-     * 返回格式化的 Skill 描述列表。
-     */
+    /** 扫描 Agent 的 skills/ 软连接，注入 Skill 元数据（name/description/path）。 返回格式化的 Skill 描述列表。 */
     public List<SkillMeta> loadSkills(String agentName) {
         List<SkillMeta> skills = new ArrayList<>();
-        Path skillsDir = workspaceRoot.resolve(".oryxos").resolve("agents")
-                .resolve(agentName).resolve("skills");
+        Path skillsDir =
+                workspaceRoot
+                        .resolve(".oryxos")
+                        .resolve("agents")
+                        .resolve(agentName)
+                        .resolve("skills");
         if (!Files.isDirectory(skillsDir)) {
             return skills;
         }
@@ -88,7 +84,11 @@ public class ContextLoader {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(skillsDir)) {
             for (Path skillLink : stream) {
                 if (Files.isDirectory(skillLink) || Files.isSymbolicLink(skillLink)) {
-                    String skillName = skillLink.getFileName().toString();
+                    Path fileName = skillLink.getFileName();
+                    if (fileName == null) {
+                        continue;
+                    }
+                    String skillName = fileName.toString();
                     Path skillMd = skillLink.resolve("SKILL.md");
                     String description = "";
                     if (Files.exists(skillMd)) {
@@ -108,8 +108,6 @@ public class ContextLoader {
         return skills;
     }
 
-    /**
-     * Skill 元数据。
-     */
+    /** Skill 元数据。 */
     public record SkillMeta(String name, String description, String path) {}
 }

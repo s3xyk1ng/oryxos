@@ -1,16 +1,12 @@
 package com.oryxos.cli.command;
 
+import java.io.IOException;
+import java.nio.file.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 
-import java.io.IOException;
-import java.nio.file.*;
-
-/**
- * oryxos init：创建 .oryxos/ 目录及子目录，创建默认 Bootstrap 文件和 MEMORY.md。
- * 操作幂等。
- */
+/** oryxos init：创建 .oryxos/ 目录及子目录，创建默认 Bootstrap 文件和 MEMORY.md。 操作幂等。 */
 @Command(name = "init", description = "Initialize OryxOS workspace")
 public class InitCommand implements Runnable {
 
@@ -28,15 +24,18 @@ public class InitCommand implements Runnable {
         }
 
         // Create default Bootstrap files
-        createFileIfAbsent(oryxosDir.resolve("AGENTS.md"),
+        createFileIfAbsent(
+                oryxosDir.resolve("AGENTS.md"),
                 "# OryxOS Agent Behavior\n\nProject-level agent behavior description.\n");
-        createFileIfAbsent(oryxosDir.resolve("SOUL.md"),
+        createFileIfAbsent(
+                oryxosDir.resolve("SOUL.md"),
                 "# Agent Soul\n\nDefault agent personality definition.\n");
-        createFileIfAbsent(oryxosDir.resolve("USER.md"),
-                "# User Preferences\n\nUser-specific preferences.\n");
+        createFileIfAbsent(
+                oryxosDir.resolve("USER.md"), "# User Preferences\n\nUser-specific preferences.\n");
 
         // Create MEMORY.md
-        createFileIfAbsent(oryxosDir.resolve("memory").resolve("MEMORY.md"),
+        createFileIfAbsent(
+                oryxosDir.resolve("memory").resolve("MEMORY.md"),
                 "# Memory\n\n## Core Memory\n\n(Core memory: always retained, never truncated)\n\n## Archival Memory\n\n(Archival memory: can be truncated, keyword search applies here)\n");
 
         log.info("OryxOS workspace initialized at {}", oryxosDir.toAbsolutePath().normalize());

@@ -1,15 +1,12 @@
 package com.oryxos.core.context;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-/**
- * 配置加载器：从环境变量加载敏感配置，解析 ${ENV_VAR} 占位符。
- */
+/** 配置加载器：从环境变量加载敏感配置，解析 ${ENV_VAR} 占位符。 */
 @Component
 public class ConfigLoader {
 
@@ -39,9 +36,7 @@ public class ConfigLoader {
         return sb.toString();
     }
 
-    /**
-     * 安全解析：如果环境变量不存在，返回原始占位符字符串（不抛异常）。
-     */
+    /** 安全解析：如果环境变量不存在，返回原始占位符字符串（不抛异常）。 */
     public String resolveLenient(String input) {
         if (input == null) return null;
         Matcher matcher = ENV_PATTERN.matcher(input);

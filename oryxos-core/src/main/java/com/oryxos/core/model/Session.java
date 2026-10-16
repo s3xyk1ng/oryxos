@@ -4,10 +4,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 会话：用户和 Agent 一次对话的上下文容器。
- * 按 Channel + 用户 + Agent 联合标识。
- */
+/** 会话：用户和 Agent 一次对话的上下文容器。 按 Channel + 用户 + Agent 联合标识。 */
 public class Session {
 
     private String sessionId;
@@ -43,42 +40,87 @@ public class Session {
         this.archivedAt = Instant.now();
     }
 
-    /**
-     * 截断对话历史，保留最近 N 轮（一轮 = 一问一答 = 2 条消息）。
-     */
+    /** 截断对话历史，保留最近 N 轮（一轮 = 一问一答 = 2 条消息）。 */
     public void truncateHistory(int maxTurns) {
         int maxMessages = maxTurns * 2;
         if (messages.size() > maxMessages) {
-            messages = new ArrayList<>(messages.subList(messages.size() - maxMessages, messages.size()));
+            messages =
+                    new ArrayList<>(
+                            messages.subList(messages.size() - maxMessages, messages.size()));
         }
     }
 
     // --- Getters & Setters ---
 
-    public String getSessionId() { return sessionId; }
-    public void setSessionId(String sessionId) { this.sessionId = sessionId; }
+    public String getSessionId() {
+        return sessionId;
+    }
 
-    public String getProfileName() { return profileName; }
-    public void setProfileName(String profileName) { this.profileName = profileName; }
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
 
-    public String getChannel() { return channel; }
-    public void setChannel(String channel) { this.channel = channel; }
+    public String getProfileName() {
+        return profileName;
+    }
 
-    public String getUserId() { return userId; }
-    public void setUserId(String userId) { this.userId = userId; }
+    public void setProfileName(String profileName) {
+        this.profileName = profileName;
+    }
 
-    public List<Message> getMessages() { return messages; }
-    public void setMessages(List<Message> messages) { this.messages = messages; }
+    public String getChannel() {
+        return channel;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
 
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public String getUserId() {
+        return userId;
+    }
 
-    public Instant getLastActiveAt() { return lastActiveAt; }
-    public void setLastActiveAt(Instant lastActiveAt) { this.lastActiveAt = lastActiveAt; }
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
-    public Instant getArchivedAt() { return archivedAt; }
-    public void setArchivedAt(Instant archivedAt) { this.archivedAt = archivedAt; }
+    public List<Message> getMessages() {
+        return messages;
+    }
+
+    public void setMessages(List<Message> messages) {
+        this.messages = messages;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Instant getLastActiveAt() {
+        return lastActiveAt;
+    }
+
+    public void setLastActiveAt(Instant lastActiveAt) {
+        this.lastActiveAt = lastActiveAt;
+    }
+
+    public Instant getArchivedAt() {
+        return archivedAt;
+    }
+
+    public void setArchivedAt(Instant archivedAt) {
+        this.archivedAt = archivedAt;
+    }
 }

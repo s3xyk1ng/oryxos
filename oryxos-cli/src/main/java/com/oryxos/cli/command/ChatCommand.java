@@ -11,10 +11,7 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
-/**
- * oryxos chat：交互式多轮对话，完整 ReAct 循环。
- * 读取用户输入 → 调 AgentService.process → 打印响应 → 支持 /quit 退出。
- */
+/** oryxos chat：交互式多轮对话，完整 ReAct 循环。 读取用户输入 → 调 AgentService.process → 打印响应 → 支持 /quit 退出。 */
 @Command(name = "chat", description = "Start interactive chat with an Agent")
 public class ChatCommand implements Runnable {
 
@@ -25,8 +22,11 @@ public class ChatCommand implements Runnable {
     private final ProfileRegistry profileRegistry;
     private final AgentLoader agentLoader;
 
-    public ChatCommand(AgentService agentService, SessionManager sessionManager,
-                       ProfileRegistry profileRegistry, AgentLoader agentLoader) {
+    public ChatCommand(
+            AgentService agentService,
+            SessionManager sessionManager,
+            ProfileRegistry profileRegistry,
+            AgentLoader agentLoader) {
         this.agentService = agentService;
         this.sessionManager = sessionManager;
         this.profileRegistry = profileRegistry;
@@ -42,7 +42,8 @@ public class ChatCommand implements Runnable {
         agentLoader.loadAgents(java.nio.file.Path.of("."));
 
         if (profileRegistry.size() == 0) {
-            System.err.println("No agents found. Run 'oryxos init' first and create an Agent in .oryxos/agents/");
+            System.err.println(
+                    "No agents found. Run 'oryxos init' first and create an Agent in .oryxos/agents/");
             return;
         }
 
@@ -66,8 +67,8 @@ public class ChatCommand implements Runnable {
         // Create session
         Session session = sessionManager.getOrCreateSession("cli", userId, profile.getName());
 
-        System.out.println("\nChat with " + profile.getName()
-                + " (provider: " + profile.getProvider() + ")");
+        System.out.println(
+                "\nChat with " + profile.getName() + " (provider: " + profile.getProvider() + ")");
         System.out.println("Type /quit to exit, /reset to clear history\n");
 
         System.out.print("> ");

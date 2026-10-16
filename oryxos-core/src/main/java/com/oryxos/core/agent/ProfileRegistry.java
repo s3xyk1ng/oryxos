@@ -1,17 +1,14 @@
 package com.oryxos.core.agent;
 
 import com.oryxos.core.model.Profile;
+import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-/**
- * Profile 注册表：按 name 索引 Profile，提供 register/remove/exists/getByName 方法。
- */
+/** Profile 注册表：按 name 索引 Profile，提供 register/remove/exists/getByName 方法。 */
 @Component
 public class ProfileRegistry {
 

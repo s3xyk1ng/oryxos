@@ -1,19 +1,15 @@
 package com.oryxos.memory;
 
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * 基于 Markdown 文件的长期记忆存储（默认实现）。
- * 操作 .oryxos/memory/MEMORY.md，按 "## 核心记忆" / "## 归档记忆" 分区。
- */
+/** 基于 Markdown 文件的长期记忆存储（默认实现）。 操作 .oryxos/memory/MEMORY.md，按 "## 核心记忆" / "## 归档记忆" 分区。 */
 @Component
 public class MarkdownMemoryStore implements LongTermMemoryStore {
 
@@ -67,8 +63,7 @@ public class MarkdownMemoryStore implements LongTermMemoryStore {
             String content = Files.readString(memoryFile);
             String lowerQuery = query.toLowerCase();
             for (String line : content.lines().toList()) {
-                if (line.toLowerCase().contains(lowerQuery)
-                        && !line.startsWith("#")) {
+                if (line.toLowerCase().contains(lowerQuery) && !line.startsWith("#")) {
                     results.add(line.trim());
                 }
             }
@@ -89,7 +84,8 @@ public class MarkdownMemoryStore implements LongTermMemoryStore {
         try {
             Files.createDirectories(memoryFile.getParent());
             if (!Files.exists(memoryFile)) {
-                Files.writeString(memoryFile, "# Memory\n\n" + CORE_HEADER + "\n\n" + ARCHIVAL_HEADER + "\n");
+                Files.writeString(
+                        memoryFile, "# Memory\n\n" + CORE_HEADER + "\n\n" + ARCHIVAL_HEADER + "\n");
             }
         } catch (IOException e) {
             log.error("Failed to create memory file: {}", e.getMessage());
@@ -103,8 +99,11 @@ public class MarkdownMemoryStore implements LongTermMemoryStore {
         if (archival != null) {
             String[] lines = archival.split("\n");
             if (lines.length > MAX_ARCHIVAL_LINES) {
-                archival = String.join("\n",
-                        java.util.Arrays.copyOfRange(lines, lines.length - MAX_ARCHIVAL_LINES, lines.length));
+                archival =
+                        String.join(
+                                "\n",
+                                java.util.Arrays.copyOfRange(
+                                        lines, lines.length - MAX_ARCHIVAL_LINES, lines.length));
             }
         }
         return new MemoryContent(core != null ? core : "", archival != null ? archival : "");
@@ -142,7 +141,9 @@ public class MarkdownMemoryStore implements LongTermMemoryStore {
         } else {
             // Insert before next section
             return content.substring(0, nextSection)
-                    + "- " + newLine + "\n"
+                    + "- "
+                    + newLine
+                    + "\n"
                     + content.substring(nextSection);
         }
     }

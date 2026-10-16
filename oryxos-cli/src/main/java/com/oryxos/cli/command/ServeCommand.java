@@ -1,15 +1,12 @@
 package com.oryxos.cli.command;
 
+import com.oryxos.boot.OryxOsApplication;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.context.ConfigurableApplicationContext;
-import com.oryxos.boot.OryxOsApplication;
 import picocli.CommandLine.Command;
 
-/**
- * oryxos serve：启动 Spring Boot Web 服务（默认端口 8080）。
- * 定时任务随 serve 一起常驻调度。
- */
+/** oryxos serve：启动 Spring Boot Web 服务（默认端口 8080）。 定时任务随 serve 一起常驻调度。 */
 @Command(name = "serve", description = "Start the OryxOS web server")
 public class ServeCommand implements Runnable {
 

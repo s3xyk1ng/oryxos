@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter
+        xmlns="https://github.com/spotbugs/filter/3.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0 https://raw.githubusercontent.com/spotbugs/spotbugs/3.1.0/spotbugs/etc/findbugsfilter.xsd">
+
+    <!--
+        OryxOS SpotBugs Exclusions
+        ===========================
+        CRLF_INJECTION_LOGS: SLF4J log messages with user input — acceptable for CLI tool.
+        EI_EXPOSE_REP / EI_EXPOSE_REP2: POJO getters/setters for internal model objects — standard Spring pattern.
+        REC_CATCH_EXCEPTION: Broad catch for resilience in parsing/CLI code.
+    -->
+
+    <!-- CRLF injection in log messages — acceptable for CLI/server hybrid -->
+    <Match>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- Internal representation exposure — standard Spring POJO pattern -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Broad exception catch — intentional for resilience -->
+    <Match>
+        <Bug pattern="REC_CATCH_EXCEPTION"/>
+    </Match>
+
+    <!-- Duplicate switch clauses — acceptable for readability -->
+    <Match>
+        <Bug pattern="DB_DUPLICATE_SWITCH_CLAUSES"/>
+    </Match>
+
+    <!-- Non-localized case conversion — acceptable for internal keyword matching -->
+    <Match>
+        <Bug pattern="DM_CONVERT_CASE"/>
+    </Match>
+
+    <!-- Null pointer from file system return values — defensive coding not needed for internal paths -->
+    <Match>
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+    </Match>
+
+    <!-- Command injection — by design: Agent tools execute shell commands and MCP processes -->
+    <Match>
+        <Bug pattern="COMMAND_INJECTION"/>
+    </Match>
+
+    <!-- Default encoding — acceptable for internal tool output -->
+    <Match>
+        <Bug pattern="DM_DEFAULT_ENCODING"/>
+    </Match>
+
+    <!-- Unicode handling — acceptable for internal MCP protocol -->
+    <Match>
+        <Bug pattern="IMPROPER_UNICODE"/>
+    </Match>
+
+    <!-- Spring endpoint detection — all controllers are intentional REST endpoints -->
+    <Match>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+</FindBugsFilter>

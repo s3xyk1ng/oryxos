@@ -2,9 +2,7 @@ package com.oryxos.web.dto;
 
 import java.time.Instant;
 
-/**
- * 统一 API 响应信封。
- */
+/** 统一 API 响应信封。 */
 public class ApiResponse<T> {
 
     private int code;
@@ -37,15 +35,35 @@ public class ApiResponse<T> {
 
     // --- Getters & Setters ---
 
-    public int getCode() { return code; }
-    public void setCode(int code) { this.code = code; }
+    public int getCode() {
+        return code;
+    }
 
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
+    public void setCode(int code) {
+        this.code = code;
+    }
 
-    public T getData() { return data; }
-    public void setData(T data) { this.data = data; }
+    public String getMessage() {
+        return message;
+    }
 
-    public Instant getTimestamp() { return timestamp; }
-    public void setTimestamp(Instant timestamp) { this.timestamp = timestamp; }
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public T getData() {
+        return data;
+    }
+
+    public void setData(T data) {
+        this.data = data;
+    }
+
+    public Instant getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Instant timestamp) {
+        this.timestamp = timestamp;
+    }
 }

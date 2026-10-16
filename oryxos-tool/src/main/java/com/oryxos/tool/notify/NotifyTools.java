@@ -2,17 +2,14 @@ package com.oryxos.tool.notify;
 
 import com.oryxos.core.model.OryxTool;
 import com.oryxos.core.model.ToolResult;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-/**
- * 通知工具：Agent 可通过此工具发送通知到配置的渠道。
- */
+/** 通知工具：Agent 可通过此工具发送通知到配置的渠道。 */
 @Component
 public class NotifyTools {
 
@@ -27,7 +24,9 @@ public class NotifyTools {
     @Component("notifyTool")
     public class NotifyTool implements OryxTool {
         @Override
-        public String getName() { return "notify"; }
+        public String getName() {
+            return "notify";
+        }
 
         @Override
         public String getDescription() {
@@ -39,10 +38,16 @@ public class NotifyTools {
             Map<String, Object> schema = new LinkedHashMap<>();
             schema.put("type", "object");
             Map<String, Object> props = new LinkedHashMap<>();
-            props.put("content", Map.of("type", "string",
-                    "description", "The notification message content"));
-            props.put("channel", Map.of("type", "string",
-                    "description", "The webhook URL or channel name to send to"));
+            props.put(
+                    "content",
+                    Map.of("type", "string", "description", "The notification message content"));
+            props.put(
+                    "channel",
+                    Map.of(
+                            "type",
+                            "string",
+                            "description",
+                            "The webhook URL or channel name to send to"));
             schema.put("properties", props);
             schema.put("required", List.of("content", "channel"));
             return schema;
@@ -60,10 +65,11 @@ public class NotifyTools {
             }
 
             // Find webhook adapter
-            NotifyChannelAdapter adapter = adapters.stream()
-                    .filter(a -> "webhook".equals(a.getType()))
-                    .findFirst()
-                    .orElse(null);
+            NotifyChannelAdapter adapter =
+                    adapters.stream()
+                            .filter(a -> "webhook".equals(a.getType()))
+                            .findFirst()
+                            .orElse(null);
 
             if (adapter == null) {
                 return ToolResult.fail("No webhook notification adapter available", false);

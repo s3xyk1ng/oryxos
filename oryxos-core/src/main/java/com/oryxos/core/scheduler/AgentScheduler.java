@@ -5,13 +5,6 @@ import com.oryxos.core.agent.ProfileRegistry;
 import com.oryxos.core.agent.SessionManager;
 import com.oryxos.core.model.Profile;
 import com.oryxos.core.model.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.scheduling.support.CronTrigger;
-import org.springframework.stereotype.Component;
-
 import jakarta.annotation.PostConstruct;
 import java.time.Instant;
 import java.util.Map;
@@ -19,10 +12,15 @@ import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.scheduling.support.CronTrigger;
+import org.springframework.stereotype.Component;
 
 /**
- * Agent 定时调度器：基于 Spring TaskScheduler + CronTrigger 动态注册任务。
- * 启动时扫描所有 Profile 的 schedules 字段，注册定时任务。
+ * Agent 定时调度器：基于 Spring TaskScheduler + CronTrigger 动态注册任务。 启动时扫描所有 Profile 的 schedules 字段，注册定时任务。
  * 进程内 ReentrantLock 防重叠执行。
  */
 @Component
@@ -39,8 +37,11 @@ public class AgentScheduler {
     private final Map<String, ScheduledFuture<?>> scheduledFutures = new ConcurrentHashMap<>();
     private final Map<String, ReentrantLock> taskLocks = new ConcurrentHashMap<>();
 
-    public AgentScheduler(ProfileRegistry profileRegistry, AgentService agentService,
-                          SessionManager sessionManager, ScheduledTaskStore taskStore) {
+    public AgentScheduler(
+            ProfileRegistry profileRegistry,
+            AgentService agentService,
+            SessionManager sessionManager,
+            ScheduledTaskStore taskStore) {
         this.profileRegistry = profileRegistry;
         this.agentService = agentService;
         this.sessionManager = sessionManager;
@@ -68,29 +69,39 @@ public class AgentScheduler {
     public void registerTask(String profileName, Profile.ScheduleConfig config) {
         String taskKey = profileName + ":" + config.getKey();
         try {
-            CronTrigger trigger = new CronTrigger(config.getCron(),
-                    TimeZone.getTimeZone(config.getZone()));
+            CronTrigger trigger =
+                    new CronTrigger(config.getCron(), TimeZone.getTimeZone(config.getZone()));
             ReentrantLock lock = taskLocks.computeIfAbsent(taskKey, k -> new ReentrantLock());
 
-            ScheduledFuture<?> future = taskScheduler.schedule(() -> {
-                if (!lock.tryLock()) {
-                    log.warn("Task {} still running, skipping", taskKey);
-                    return;
-                }
-                try {
-                    executeTask(taskKey, profileName, config.getMessage());
-                } finally {
-                    lock.unlock();
-                }
-            }, trigger);
+            ScheduledFuture<?> future =
+                    taskScheduler.schedule(
+                            () -> {
+                                if (!lock.tryLock()) {
+                                    log.warn("Task {} still running, skipping", taskKey);
+                                    return;
+                                }
+                                try {
+                                    executeTask(taskKey, profileName, config.getMessage());
+                                } finally {
+                                    lock.unlock();
+                                }
+                            },
+                            trigger);
 
             scheduledFutures.put(taskKey, future);
 
             // Persist to store
-            taskStore.save(new ScheduledTaskStore.TaskInfo(
-                    taskKey, profileName, config.getCron(), config.getZone(),
-                    config.getMessage(), config.getDisplayName(), true,
-                    Instant.now(), Instant.now()));
+            taskStore.save(
+                    new ScheduledTaskStore.TaskInfo(
+                            taskKey,
+                            profileName,
+                            config.getCron(),
+                            config.getZone(),
+                            config.getMessage(),
+                            config.getDisplayName(),
+                            true,
+                            Instant.now(),
+                            Instant.now()));
 
             log.info("Registered scheduled task: {} (cron: {})", taskKey, config.getCron());
         } catch (Exception e) {
@@ -118,11 +129,14 @@ public class AgentScheduler {
         String sessionId = SessionManager.generateSessionId("scheduler", "scheduler", profileName);
         Session session = sessionManager.getOrCreateSession("scheduler", "scheduler", profileName);
         try {
-            String result = agentService.process(session, message != null ? message : "Execute scheduled task");
+            String result =
+                    agentService.process(
+                            session, message != null ? message : "Execute scheduled task");
             taskStore.recordExecution(taskKey, sessionId, "SUCCESS", result, start, Instant.now());
         } catch (Exception e) {
             log.error("Scheduled task {} failed: {}", taskKey, e.getMessage());
-            taskStore.recordExecution(taskKey, sessionId, "FAILED", e.getMessage(), start, Instant.now());
+            taskStore.recordExecution(
+                    taskKey, sessionId, "FAILED", e.getMessage(), start, Instant.now());
         }
     }
 }

@@ -1,9 +1,11 @@
 package com.oryxos.cli;
 
+import com.oryxos.boot.OryxOsApplication;
 import com.oryxos.cli.command.ChatCommand;
 import com.oryxos.cli.command.InitCommand;
 import com.oryxos.cli.command.ServeCommand;
 import com.oryxos.cli.command.StatusCommand;
+import java.util.concurrent.Callable;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -11,21 +13,24 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.IFactory;
 
-import com.oryxos.boot.OryxOsApplication;
-
-import java.util.concurrent.Callable;
-
-@Command(name = "oryxos",
+@Command(
+        name = "oryxos",
         mixinStandardHelpOptions = true,
         version = "OryxOS 1.0.0-SNAPSHOT",
         description = "Java-native Enterprise Agent OS",
-        subcommands = {InitCommand.class, ChatCommand.class, ServeCommand.class, StatusCommand.class})
+        subcommands = {
+            InitCommand.class,
+            ChatCommand.class,
+            ServeCommand.class,
+            StatusCommand.class
+        })
 public class OryxOsCli implements Callable<Integer> {
 
     @Override
     public Integer call() {
-        System.out.println("""
-                
+        System.out.println(
+                """
+
                   ___  __  __   __
                  / _ \\/ / / /\\ / /
                 / , _/ /_/ // // /
@@ -39,8 +44,8 @@ public class OryxOsCli implements Callable<Integer> {
 
     public static void main(String[] args) {
         // Check if a long-running subcommand is requested
-        boolean isLongRunning = args.length > 0
-                && ("serve".equals(args[0]) || "gateway".equals(args[0]));
+        boolean isLongRunning =
+                args.length > 0 && ("serve".equals(args[0]) || "gateway".equals(args[0]));
 
         if (isLongRunning) {
             // For serve/gateway: start Spring Boot with web server

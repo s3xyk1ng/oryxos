@@ -3,19 +3,15 @@ package com.oryxos.tool.mcp;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
-/**
- * MCP 客户端服务：连接 MCP Server，获取工具列表，转发工具调用。
- * 支持 stdio 传输协议（SSE 传输在后续版本实现）。
- */
+/** MCP 客户端服务：连接 MCP Server，获取工具列表，转发工具调用。 支持 stdio 传输协议（SSE 传输在后续版本实现）。 */
 @Component
 public class McpClientService {
 
@@ -26,14 +22,15 @@ public class McpClientService {
 
     /**
      * 连接到指定的 MCP Server。
+     *
      * @param name 连接名称
      * @param transport 传输类型：stdio / sse
      * @param command stdio 模式的命令（如 "npx"）
      * @param args 命令参数
      * @param url SSE 模式的 URL
      */
-    public void connect(String name, String transport, String command,
-                        List<String> args, String url) {
+    public void connect(
+            String name, String transport, String command, List<String> args, String url) {
         if ("stdio".equalsIgnoreCase(transport)) {
             connectStdio(name, command, args);
         } else if ("sse".equalsIgnoreCase(transport)) {
@@ -43,9 +40,7 @@ public class McpClientService {
         }
     }
 
-    /**
-     * 获取指定 MCP Server 的工具列表。
-     */
+    /** 获取指定 MCP Server 的工具列表。 */
     public List<McpToolInfo> listTools(String serverName) {
         McpConnection conn = connections.get(serverName);
         if (conn == null) {
@@ -67,9 +62,7 @@ public class McpClientService {
         }
     }
 
-    /**
-     * 调用指定 MCP Server 上的工具。
-     */
+    /** 调用指定 MCP Server 上的工具。 */
     public String callTool(String serverName, String toolName, Map<String, Object> arguments) {
         McpConnection conn = connections.get(serverName);
         if (conn == null) {
@@ -90,24 +83,26 @@ public class McpClientService {
         }
     }
 
-    /**
-     * 断开所有 MCP 连接。
-     */
+    /** 断开所有 MCP 连接。 */
     public void disconnectAll() {
-        connections.values().forEach(conn -> {
-            try {
-                conn.process.destroyForcibly();
-                log.info("Disconnected MCP server: {}", conn.name);
-            } catch (Exception e) {
-                log.warn("Error disconnecting MCP server {}: {}", conn.name, e.getMessage());
-            }
-        });
+        connections
+                .values()
+                .forEach(
+                        conn -> {
+                            try {
+                                conn.process.destroyForcibly();
+                                log.info("Disconnected MCP server: {}", conn.name);
+                            } catch (Exception e) {
+                                log.warn(
+                                        "Error disconnecting MCP server {}: {}",
+                                        conn.name,
+                                        e.getMessage());
+                            }
+                        });
         connections.clear();
     }
 
-    /**
-     * 获取所有已连接的 MCP Server 名称。
-     */
+    /** 获取所有已连接的 MCP Server 名称。 */
     public Set<String> getConnectedServers() {
         return Collections.unmodifiableSet(connections.keySet());
     }
@@ -124,9 +119,16 @@ public class McpClientService {
             pb.redirectErrorStream(false);
             Process process = pb.start();
 
-            McpConnection conn = new McpConnection(name, process,
-                    new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8)),
-                    new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)));
+            McpConnection conn =
+                    new McpConnection(
+                            name,
+                            process,
+                            new BufferedWriter(
+                                    new OutputStreamWriter(
+                                            process.getOutputStream(), StandardCharsets.UTF_8)),
+                            new BufferedReader(
+                                    new InputStreamReader(
+                                            process.getInputStream(), StandardCharsets.UTF_8)));
             connections.put(name, conn);
 
             // Send initialize
@@ -172,10 +174,12 @@ public class McpClientService {
 
             for (JsonNode toolNode : toolsNode) {
                 String name = toolNode.has("name") ? toolNode.get("name").asText() : "";
-                String description = toolNode.has("description") ? toolNode.get("description").asText() : "";
+                String description =
+                        toolNode.has("description") ? toolNode.get("description").asText() : "";
                 JsonNode schema = toolNode.get("inputSchema");
-                tools.add(new McpToolInfo(name, description,
-                        schema != null ? schema.toString() : "{}"));
+                tools.add(
+                        new McpToolInfo(
+                                name, description, schema != null ? schema.toString() : "{}"));
             }
         } catch (Exception e) {
             log.error("Failed to parse MCP tool list: {}", e.getMessage());
@@ -187,9 +191,7 @@ public class McpClientService {
         return s != null && s.length() > maxLen ? s.substring(0, maxLen) + "..." : s;
     }
 
-    /**
-     * MCP 连接信息。
-     */
+    /** MCP 连接信息。 */
     static class McpConnection {
         final String name;
         final Process process;
@@ -204,8 +206,6 @@ public class McpClientService {
         }
     }
 
-    /**
-     * MCP 工具信息。
-     */
+    /** MCP 工具信息。 */
     public record McpToolInfo(String name, String description, String inputSchemaJson) {}
 }

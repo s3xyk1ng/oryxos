@@ -2,21 +2,18 @@ package com.oryxos.tool.sandbox;
 
 import com.oryxos.core.model.Sandbox;
 import com.oryxos.core.model.SandboxAction;
+import java.io.File;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.List;
-
 /**
- * 白名单 Sandbox 实现：应用层校验（"劝阻级"防线）。
- * - 文件路径：白名单 + ../ 穿越防护
- * - Shell 命令：精确比对可执行文件白名单
- * - HTTP 域名：host 解析 + 通配符匹配
+ * 白名单 Sandbox 实现：应用层校验（"劝阻级"防线）。 - 文件路径：白名单 + ../ 穿越防护 - Shell 命令：精确比对可执行文件白名单 - HTTP 域名：host 解析 +
+ * 通配符匹配
  */
 @Component
 public class WhitelistSandbox implements Sandbox {

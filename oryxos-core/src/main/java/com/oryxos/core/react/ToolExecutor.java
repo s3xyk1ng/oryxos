@@ -2,17 +2,14 @@ package com.oryxos.core.react;
 
 import com.oryxos.core.agent.AuditPort;
 import com.oryxos.core.model.*;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Map;
-
-/**
- * 工具执行器：从 ToolRegistry 查找 Tool → Sandbox 检查 → 执行 → 包装 ToolResult → 审计。
- */
+/** 工具执行器：从 ToolRegistry 查找 Tool → Sandbox 检查 → 执行 → 包装 ToolResult → 审计。 */
 @Component
 public class ToolExecutor {
 
@@ -26,18 +23,14 @@ public class ToolExecutor {
         this.auditPort = auditPort;
     }
 
-    /**
-     * 执行一次工具调用。
-     */
+    /** 执行一次工具调用。 */
     public ToolResult execute(Session session, ToolCallRequest request, List<OryxTool> tools) {
         String toolName = request.getToolName();
         Map<String, Object> input = request.getArguments();
 
         // Find tool
-        OryxTool tool = tools.stream()
-                .filter(t -> t.getName().equals(toolName))
-                .findFirst()
-                .orElse(null);
+        OryxTool tool =
+                tools.stream().filter(t -> t.getName().equals(toolName)).findFirst().orElse(null);
 
         if (tool == null) {
             String error = "Tool not found: " + toolName;
@@ -70,9 +63,14 @@ public class ToolExecutor {
         try {
             String inputJson = mapToJson(input);
             String resultJson = result.isSuccess() ? result.getContent() : result.getError();
-            auditPort.recordToolInvocation(session.getSessionId(), toolName,
-                    inputJson, resultJson, result.isSuccess(),
-                    result.isSuccess() ? null : result.getError(), duration);
+            auditPort.recordToolInvocation(
+                    session.getSessionId(),
+                    toolName,
+                    inputJson,
+                    resultJson,
+                    result.isSuccess(),
+                    result.isSuccess() ? null : result.getError(),
+                    duration);
         } catch (Exception e) {
             log.warn("Failed to record tool audit: {}", e.getMessage());
         }

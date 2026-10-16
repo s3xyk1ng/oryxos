@@ -1,17 +1,13 @@
 package com.oryxos.web.controller;
 
 import com.oryxos.core.agent.SessionManager;
-import com.oryxos.core.model.Message;
 import com.oryxos.core.model.Session;
 import com.oryxos.web.GlobalExceptionHandler;
 import com.oryxos.web.dto.ApiResponse;
+import java.util.Map;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
-/**
- * Session API：创建会话、发送消息、查询历史、归档。
- */
+/** Session API：创建会话、发送消息、查询历史、归档。 */
 @RestController
 @RequestMapping("/api/v1/sessions")
 public class SessionApiController {
@@ -19,8 +15,8 @@ public class SessionApiController {
     private final SessionManager sessionManager;
     private final com.oryxos.core.agent.AgentService agentService;
 
-    public SessionApiController(SessionManager sessionManager,
-                                com.oryxos.core.agent.AgentService agentService) {
+    public SessionApiController(
+            SessionManager sessionManager, com.oryxos.core.agent.AgentService agentService) {
         this.sessionManager = sessionManager;
         this.agentService = agentService;
     }
@@ -38,8 +34,8 @@ public class SessionApiController {
     }
 
     @PostMapping("/{id}/messages")
-    public ApiResponse<String> sendMessage(@PathVariable String id,
-                                           @RequestBody Map<String, String> body) {
+    public ApiResponse<String> sendMessage(
+            @PathVariable String id, @RequestBody Map<String, String> body) {
         Session session = sessionManager.getSession(id);
         if (session == null) {
             throw new GlobalExceptionHandler.ResourceNotFoundException("Session not found: " + id);

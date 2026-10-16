@@ -5,9 +5,7 @@ import com.oryxos.memory.MemoryService;
 import com.oryxos.web.dto.ApiResponse;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * Memory API：查询长期记忆。
- */
+/** Memory API：查询长期记忆。 */
 @RestController
 @RequestMapping("/api/v1/memory")
 public class MemoryApiController {
