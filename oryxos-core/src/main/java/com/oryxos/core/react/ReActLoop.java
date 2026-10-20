@@ -1,17 +1,17 @@
 package com.oryxos.core.react;
 
-import com.oryxos.core.agent.AuditPort;
+import com.oryxos.core.agent.ProviderService;
 import com.oryxos.core.model.*;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.stereotype.Component;
 
 /**
- * ReAct 循环：Agent 大脑。 流程：组装 Prompt → 调用 LLM → 解析 tool calls → 执行 Tool → 追加结果 → 循环。 无 tool call
- * 时终止，达到 MAX_ITERATIONS 时强制终止。
+ * ReAct 循环引擎：Agent 大脑。 驱动 Reason-Act 循环：组装 Prompt → 调用 LLM → 判断是否有工具调用 → 执行工具 → 回填结果 → 继续循环。 严格
+ * maxIterations 限制，达到上限强制终止。
  */
 @Component
 public class ReActLoop {
@@ -19,25 +19,36 @@ public class ReActLoop {
     private static final Logger log = LoggerFactory.getLogger(ReActLoop.class);
 
     private final PromptBuilder promptBuilder;
+    private final ProviderService providerService;
     private final ToolExecutor toolExecutor;
-    private final AuditPort auditPort;
 
-    public ReActLoop(PromptBuilder promptBuilder, ToolExecutor toolExecutor, AuditPort auditPort) {
+    public ReActLoop(
+            PromptBuilder promptBuilder,
+            ProviderService providerService,
+            ToolExecutor toolExecutor) {
         this.promptBuilder = promptBuilder;
+        this.providerService = providerService;
         this.toolExecutor = toolExecutor;
-        this.auditPort = auditPort;
     }
 
-    /** 执行 ReAct 循环。 */
-    public String run(
-            Session session,
-            LlmPort llm,
-            Profile profile,
-            List<OryxTool> tools,
-            String userMessage) {
-        int maxIterations = profile.getMaxIterations();
-        session.addMessage(new Message("user", userMessage));
+    /**
+     * 执行 ReAct 循环。
+     *
+     * @param session 当前会话
+     * @param profile Agent 配置
+     * @param message 用户消息（首次传入，后续迭代传 null）
+     * @return LLM 最终响应
+     */
+    public ProviderResponse run(Session session, Profile profile, String message) {
+        // 1. 用户消息追加到会话（首次传入，后续 null 不追加）
+        if (message != null && !message.isBlank()) {
+            session.addMessage(new Message("user", message));
+        }
 
+        int maxIterations = profile.getMaxIterations();
+        ProviderResponse response = null;
+
+        // 2. 循环推理，严格控制最大次数
         for (int iteration = 0; iteration < maxIterations; iteration++) {
             log.debug(
                     "ReAct iteration {}/{} for session {}",
@@ -45,70 +56,59 @@ public class ReActLoop {
                     maxIterations,
                     session.getSessionId());
 
-            // Build prompt
-            String systemPrompt = promptBuilder.buildSystemPrompt(profile, session);
-            Prompt prompt =
-                    promptBuilder.buildChatPrompt(systemPrompt, session.getMessages(), tools);
+            // 组装 Prompt（委托 PromptBuilder）
+            org.springframework.ai.chat.prompt.Prompt prompt =
+                    promptBuilder.build(profile, session);
 
-            // Call LLM
-            long llmStart = System.currentTimeMillis();
-            ChatResponse response = llm.call(prompt);
-            long llmDuration = System.currentTimeMillis() - llmStart;
+            // 调用 LLM（委托 ProviderService，内置审计）
+            response = providerService.chat(session.getSessionId(), profile, toOryxPrompt(prompt));
 
-            // Record LLM audit
-            recordLlmAudit(session, llm, response, llmDuration);
+            // 助手响应追加到会话历史
+            session.addMessage(new Message("assistant", response.content()));
 
-            String assistantContent = response.getResult().getOutput().getText();
-            session.addMessage(new Message("assistant", assistantContent));
-
-            // Extract tool calls
-            List<ToolCallRequest> toolCalls = ToolCallParser.extract(response);
-            if (toolCalls.isEmpty()) {
+            // 无 tool_calls → 推理结束
+            if (!response.hasToolCalls()) {
                 log.debug("No tool calls at iteration {}, loop ends", iteration + 1);
-                return assistantContent;
+                return response;
             }
 
-            // Execute each tool call
-            for (ToolCallRequest tc : toolCalls) {
-                log.debug("Executing tool: {} (iteration {})", tc.getToolName(), iteration + 1);
-                ToolResult result = toolExecutor.execute(session, tc, tools);
+            // 有 tool_calls → 逐个执行（委托 ToolExecutor）
+            for (ToolCall tc : response.toolCalls()) {
+                log.debug("Executing tool: {} (iteration {})", tc.name(), iteration + 1);
+                ToolResult result = toolExecutor.execute(session, tc);
                 String resultContent =
                         result.isSuccess() ? result.getContent() : "Error: " + result.getError();
                 session.addMessage(
-                        new Message("tool", "[" + tc.getToolName() + "] " + resultContent));
+                        new Message("tool", "[" + tc.name() + "] " + resultContent, tc.id()));
             }
         }
 
-        // Max iterations reached
-        log.warn(
-                "Max iterations ({}) reached for session {}",
-                maxIterations,
-                session.getSessionId());
-        List<Message> messages = session.getMessages();
-        for (int i = messages.size() - 1; i >= 0; i--) {
-            if ("assistant".equals(messages.get(i).getRole())) {
-                return messages.get(i).getContent();
-            }
-        }
-        return "I've reached the maximum number of steps.";
+        // 3. 达到最大轮数，强制返回
+        log.warn("Max iterations ({}) reached, session={}", maxIterations, session.getSessionId());
+        return response;
     }
 
-    private void recordLlmAudit(
-            Session session, LlmPort llm, ChatResponse response, long duration) {
-        try {
-            var metadata = response.getMetadata();
-            var usage = metadata.getUsage();
-            int promptTokens = usage != null ? (int) usage.getPromptTokens() : 0;
-            int completionTokens = usage != null ? (int) usage.getCompletionTokens() : 0;
-            auditPort.recordLlmCall(
-                    session.getSessionId(),
-                    llm.getProviderName(),
-                    llm.getModelName(),
-                    promptTokens,
-                    completionTokens,
-                    duration);
-        } catch (Exception e) {
-            log.warn("Failed to record LLM audit: {}", e.getMessage());
-        }
+    /** 将 Spring AI Prompt 转为 OryxOS Prompt（提取消息和工具列表）。 */
+    private Prompt toOryxPrompt(org.springframework.ai.chat.prompt.Prompt springPrompt) {
+        // ProviderService 接收 OryxOS 原生 Prompt 类型
+        // 这里将 Spring AI Prompt 的消息提取为 OryxOS Message 列表
+        // 工具列表由 ProviderService 通过 ToolRegistry 获取
+        List<Message> messages =
+                springPrompt.getInstructions().stream()
+                        .map(
+                                m -> {
+                                    String role;
+                                    if (m instanceof UserMessage) {
+                                        role = "user";
+                                    } else if (m instanceof AssistantMessage) {
+                                        role = "assistant";
+                                    } else {
+                                        // SystemMessage 及其他未知类型统一映射为 system
+                                        role = "system";
+                                    }
+                                    return new Message(role, m.getText());
+                                })
+                        .toList();
+        return new Prompt(messages, null);
     }
 }

@@ -8,6 +8,7 @@ public class Message {
     private String role; // user / assistant / system / tool
     private String content;
     private Instant timestamp;
+    private String toolCallId; // tool 消息关联对应的 tool_call id，可选
 
     public Message() {
         this.timestamp = Instant.now();
@@ -16,6 +17,14 @@ public class Message {
     public Message(String role, String content) {
         this.role = role;
         this.content = content;
+        this.timestamp = Instant.now();
+    }
+
+    /** 创建 tool 消息，关联 tool_call id。 */
+    public Message(String role, String content, String toolCallId) {
+        this.role = role;
+        this.content = content;
+        this.toolCallId = toolCallId;
         this.timestamp = Instant.now();
     }
 
@@ -41,5 +50,13 @@ public class Message {
 
     public void setTimestamp(Instant timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public String getToolCallId() {
+        return toolCallId;
+    }
+
+    public void setToolCallId(String toolCallId) {
+        this.toolCallId = toolCallId;
     }
 }

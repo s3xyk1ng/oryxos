@@ -14,6 +14,9 @@ public class ToolInvocationEntity {
     @Column(name = "session_id", length = 64, nullable = false)
     private String sessionId;
 
+    @Column(name = "tool_call_id", length = 64)
+    private String toolCallId;
+
     @Column(name = "tool_name", length = 64, nullable = false)
     private String toolName;
 
@@ -51,6 +54,14 @@ public class ToolInvocationEntity {
 
     public void setSessionId(String sessionId) {
         this.sessionId = sessionId;
+    }
+
+    public String getToolCallId() {
+        return toolCallId;
+    }
+
+    public void setToolCallId(String toolCallId) {
+        this.toolCallId = toolCallId;
     }
 
     public String getToolName() {

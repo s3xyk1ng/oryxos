@@ -1,14 +1,15 @@
 package com.oryxos.core.agent;
 
 import com.oryxos.core.model.*;
-import com.oryxos.core.react.LlmPort;
 import com.oryxos.core.react.ReActLoop;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-/** Agent 服务：统一入口。 process(Session, message) → 调 ReActLoop.run → 返回回复。 */
+/**
+ * Agent 服务：统一入口。 process(Session, message) → ProfileContext.set → ReActLoop.run →
+ * sessionManager.save → 返回回复，finally 中 ProfileContext.clear。
+ */
 @Service
 public class AgentService {
 
@@ -16,18 +17,10 @@ public class AgentService {
 
     private final ReActLoop reActLoop;
     private final SessionManager sessionManager;
-    private final ToolRegistry toolRegistry;
-    private final LlmPortFactory llmPortFactory;
 
-    public AgentService(
-            ReActLoop reActLoop,
-            SessionManager sessionManager,
-            ToolRegistry toolRegistry,
-            LlmPortFactory llmPortFactory) {
+    public AgentService(ReActLoop reActLoop, SessionManager sessionManager) {
         this.reActLoop = reActLoop;
         this.sessionManager = sessionManager;
-        this.toolRegistry = toolRegistry;
-        this.llmPortFactory = llmPortFactory;
     }
 
     /** 处理用户消息，返回 Agent 回复。 */
@@ -38,9 +31,19 @@ public class AgentService {
                     "Profile not found for session: " + session.getSessionId());
         }
 
-        LlmPort llm = llmPortFactory.createForProfile(profile);
-        List<OryxTool> tools = toolRegistry.getToolsForProfile(profile);
-
-        return reActLoop.run(session, llm, profile, tools, message);
+        ProfileContext.set(profile);
+        try {
+            ProviderResponse response = reActLoop.run(session, profile, message);
+            sessionManager.save(session);
+            return response.content();
+        } catch (Exception e) {
+            log.error(
+                    "Agent process failed for session {}: {}",
+                    session.getSessionId(),
+                    e.getMessage());
+            throw e;
+        } finally {
+            ProfileContext.clear();
+        }
     }
 }

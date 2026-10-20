@@ -1,5 +1,6 @@
 package com.oryxos.core.context;
 
+import com.oryxos.core.agent.AgentConfigException;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
@@ -36,6 +37,9 @@ public class ContextLoader {
                 } catch (IOException e) {
                     log.warn("Failed to read {}: {}", path, e.getMessage());
                 }
+            } else {
+                // 人格文件缺失告警，防止 Agent “人格丢失”
+                log.warn("Bootstrap file missing: {}", path);
             }
         }
         return sb.toString().trim();
@@ -50,7 +54,8 @@ public class ContextLoader {
                         .resolve(agentName)
                         .resolve("AGENT.md");
         if (!Files.exists(agentMd)) {
-            return "";
+            // AGENT.md 是核心指令，缺失必须 fail-fast，不静默降级
+            throw new AgentConfigException("AGENT.md not found for agent: " + agentName);
         }
         try {
             String content = Files.readString(agentMd);

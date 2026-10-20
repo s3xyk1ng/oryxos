@@ -52,6 +52,12 @@ public class SessionManager {
         return sessionProfiles.get(session.getSessionId());
     }
 
+    /** 保存 Session（内存版直接返回，Day 3 升级 SQLite 时实现持久化）。 */
+    public void save(Session session) {
+        sessions.put(session.getSessionId(), session);
+        log.debug("Saved session: {}", session.getSessionId());
+    }
+
     /** 归档 Session。 */
     public void archiveSession(String sessionId) {
         Session session = sessions.get(sessionId);

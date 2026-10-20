@@ -1,86 +1,120 @@
 package com.oryxos.core.react;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oryxos.core.agent.AuditPort;
+import com.oryxos.core.agent.ToolRegistry;
 import com.oryxos.core.model.*;
-import java.util.List;
+import java.util.Collections;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/** 工具执行器：从 ToolRegistry 查找 Tool → Sandbox 检查 → 执行 → 包装 ToolResult → 审计。 */
+/**
+ * 工具执行器：从 ToolRegistry 查找 Tool → Sandbox 检查 → 执行 → 审计。 审计在 finally 块中完成，无论成功/失败/找不到/沙箱拒绝都写一条
+ * tool_invocations 记录。
+ */
 @Component
 public class ToolExecutor {
 
     private static final Logger log = LoggerFactory.getLogger(ToolExecutor.class);
 
+    private final ToolRegistry toolRegistry;
     private final Sandbox sandbox;
     private final AuditPort auditPort;
+    private final ObjectMapper objectMapper;
 
-    public ToolExecutor(@Autowired(required = false) Sandbox sandbox, AuditPort auditPort) {
+    public ToolExecutor(
+            ToolRegistry toolRegistry,
+            @Autowired(required = false) Sandbox sandbox,
+            AuditPort auditPort) {
+        this.toolRegistry = toolRegistry;
         this.sandbox = sandbox;
         this.auditPort = auditPort;
+        this.objectMapper = new ObjectMapper();
     }
 
-    /** 执行一次工具调用。 */
-    public ToolResult execute(Session session, ToolCallRequest request, List<OryxTool> tools) {
-        String toolName = request.getToolName();
-        Map<String, Object> input = request.getArguments();
+    /** 执行一次工具调用，无论成败都记录审计。 */
+    public ToolResult execute(Session session, ToolCall toolCall) {
+        String toolName = toolCall.name();
+        String toolCallId = toolCall.id();
+        Map<String, Object> input = parseArguments(toolCall.arguments());
+        long start = System.currentTimeMillis();
+        ToolResult result = null;
 
-        // Find tool
-        OryxTool tool =
-                tools.stream().filter(t -> t.getName().equals(toolName)).findFirst().orElse(null);
+        try {
+            // 1. 从 ToolRegistry 查找工具
+            OryxTool tool = toolRegistry.getTool(toolName);
+            if (tool == null) {
+                result = ToolResult.fail("Tool not found: " + toolName, false);
+                return result;
+            }
 
-        if (tool == null) {
-            String error = "Tool not found: " + toolName;
-            log.warn(error);
-            return ToolResult.fail(error, false);
-        }
+            // 2. Sandbox 检查（可选）
+            if (sandbox != null) {
+                try {
+                    performSandboxCheck(tool, input);
+                } catch (SecurityException e) {
+                    log.warn("Sandbox rejected tool {}: {}", toolName, e.getMessage());
+                    result = ToolResult.fail("Sandbox rejected: " + e.getMessage(), false);
+                    return result;
+                }
+            }
 
-        // Sandbox check (skip if no sandbox configured)
-        if (sandbox != null) {
+            // 3. 执行工具
             try {
-                performSandboxCheck(tool, input);
-            } catch (SecurityException e) {
-                log.warn("Sandbox rejected tool {}: {}", toolName, e.getMessage());
-                return ToolResult.fail("Sandbox rejected: " + e.getMessage(), false);
+                result = tool.execute(input);
+            } catch (Exception e) {
+                log.error("Tool {} execution failed: {}", toolName, e.getMessage());
+                result = ToolResult.fail("Execution error: " + e.getMessage(), true);
+            }
+            return result;
+        } finally {
+            // 4. 审计：无论成败，四种情况全覆盖
+            long duration = System.currentTimeMillis() - start;
+            try {
+                String inputJson = mapToJson(input);
+                String resultJson =
+                        (result != null)
+                                ? (result.isSuccess() ? result.getContent() : result.getError())
+                                : "unknown";
+                boolean success = (result != null) && result.isSuccess();
+                String errorMessage =
+                        (result != null && !result.isSuccess()) ? result.getError() : null;
+                auditPort.recordToolInvocation(
+                        session.getSessionId(),
+                        toolCallId,
+                        toolName,
+                        inputJson,
+                        resultJson,
+                        success,
+                        errorMessage,
+                        duration);
+            } catch (Exception e) {
+                log.warn("Failed to record tool audit: {}", e.getMessage());
             }
         }
-
-        // Execute
-        long start = System.currentTimeMillis();
-        ToolResult result;
-        try {
-            result = tool.execute(input);
-        } catch (Exception e) {
-            log.error("Tool {} execution failed: {}", toolName, e.getMessage());
-            result = ToolResult.fail("Execution error: " + e.getMessage(), true);
-        }
-        long duration = System.currentTimeMillis() - start;
-
-        // Audit
-        try {
-            String inputJson = mapToJson(input);
-            String resultJson = result.isSuccess() ? result.getContent() : result.getError();
-            auditPort.recordToolInvocation(
-                    session.getSessionId(),
-                    toolName,
-                    inputJson,
-                    resultJson,
-                    result.isSuccess(),
-                    result.isSuccess() ? null : result.getError(),
-                    duration);
-        } catch (Exception e) {
-            log.warn("Failed to record tool audit: {}", e.getMessage());
-        }
-
-        return result;
     }
 
+    /** 解析 ToolCall 的 JSON arguments 为 Map。 */
+    private Map<String, Object> parseArguments(String argumentsJson) {
+        if (argumentsJson == null || argumentsJson.isBlank()) {
+            return Collections.emptyMap();
+        }
+        try {
+            return objectMapper.readValue(
+                    argumentsJson, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to parse tool arguments: {}", argumentsJson);
+            return Collections.emptyMap();
+        }
+    }
+
+    /** Sandbox 安全检查：按工具类型分派到对应的 SandboxAction。 */
     private void performSandboxCheck(OryxTool tool, Map<String, Object> input) {
         String name = tool.getName();
-        // File operations
         if (name.startsWith("read_file") || name.startsWith("list_dir")) {
             String path = (String) input.getOrDefault("path", "");
             sandbox.enforce(new SandboxAction(SandboxAction.ActionType.FILE_READ, path));
@@ -94,12 +128,13 @@ public class ToolExecutor {
             String url = (String) input.getOrDefault("url", "");
             sandbox.enforce(new SandboxAction(SandboxAction.ActionType.HTTP_REQUEST, url));
         }
-        // Other tools (memory, notify, mcp) pass through sandbox
+        // 其他工具（memory、notify、mcp）直接通过 sandbox
     }
 
+    /** Map 转 JSON 字符串，失败时降级为 toString()。 */
     private String mapToJson(Map<String, Object> map) {
         try {
-            return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(map);
+            return objectMapper.writeValueAsString(map);
         } catch (Exception e) {
             return map.toString();
         }

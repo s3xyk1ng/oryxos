@@ -6,6 +6,7 @@ public interface AuditPort {
     /** 记录一次 Tool 调用。 */
     void recordToolInvocation(
             String sessionId,
+            String toolCallId,
             String toolName,
             String inputJson,
             String resultJson,

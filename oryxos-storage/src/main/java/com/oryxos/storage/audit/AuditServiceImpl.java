@@ -28,6 +28,7 @@ public class AuditServiceImpl implements AuditPort {
     @Override
     public void recordToolInvocation(
             String sessionId,
+            String toolCallId,
             String toolName,
             String inputJson,
             String resultJson,
@@ -37,6 +38,7 @@ public class AuditServiceImpl implements AuditPort {
         try {
             ToolInvocationEntity entity = new ToolInvocationEntity();
             entity.setSessionId(sessionId);
+            entity.setToolCallId(toolCallId);
             entity.setToolName(toolName);
             entity.setInputJson(inputJson);
             entity.setResultJson(resultJson);

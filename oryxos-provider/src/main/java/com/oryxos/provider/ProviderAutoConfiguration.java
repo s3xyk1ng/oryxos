@@ -49,10 +49,4 @@ public class ProviderAutoConfiguration {
             AuditLogger auditLogger) {
         return new SpringAiProviderServiceImpl(registry, factory, toolSchemaAdapter, auditLogger);
     }
-
-    @Bean
-    public com.oryxos.core.agent.LlmPortFactory llmPortFactory(
-            InMemoryProviderRegistry registry, ProviderChatModelFactory factory) {
-        return new ProviderLlmPortFactory(registry, factory);
-    }
 }
