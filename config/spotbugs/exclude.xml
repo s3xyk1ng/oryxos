@@ -64,4 +64,14 @@
     <Match>
         <Bug pattern="SPRING_ENDPOINT"/>
     </Match>
+
+    <!-- System.exit() — by design: CLI application exits with status code after command execution -->
+    <Match>
+        <Bug pattern="DM_EXIT"/>
+    </Match>
+
+    <!-- Ignore individual file deletion errors in recursive delete — acceptable for cleanup operations -->
+    <Match>
+        <Bug pattern="DE_MIGHT_IGNORE"/>
+    </Match>
 </FindBugsFilter>

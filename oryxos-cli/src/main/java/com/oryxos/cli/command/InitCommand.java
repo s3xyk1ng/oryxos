@@ -14,7 +14,7 @@ public class InitCommand implements Runnable {
 
     @Override
     public void run() {
-        Path root = Path.of(".");
+        Path root = Path.of(System.getProperty("user.dir"));
         Path oryxosDir = root.resolve(".oryxos");
 
         // Create directory structure

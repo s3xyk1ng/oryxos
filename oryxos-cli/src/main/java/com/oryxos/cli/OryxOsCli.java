@@ -2,9 +2,14 @@ package com.oryxos.cli;
 
 import com.oryxos.boot.OryxOsApplication;
 import com.oryxos.cli.command.ChatCommand;
+import com.oryxos.cli.command.GatewayCommand;
 import com.oryxos.cli.command.InitCommand;
+import com.oryxos.cli.command.ProfileCommand;
+import com.oryxos.cli.command.ProviderCommand;
 import com.oryxos.cli.command.ServeCommand;
 import com.oryxos.cli.command.StatusCommand;
+import com.oryxos.cli.command.ToolCommand;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
@@ -22,7 +27,11 @@ import picocli.CommandLine.IFactory;
             InitCommand.class,
             ChatCommand.class,
             ServeCommand.class,
-            StatusCommand.class
+            GatewayCommand.class,
+            StatusCommand.class,
+            ProfileCommand.class,
+            ProviderCommand.class,
+            ToolCommand.class
         })
 public class OryxOsCli implements Callable<Integer> {
 
@@ -42,25 +51,49 @@ public class OryxOsCli implements Callable<Integer> {
         return 0;
     }
 
-    public static void main(String[] args) {
-        // Check if a long-running subcommand is requested
-        boolean isLongRunning =
-                args.length > 0 && ("serve".equals(args[0]) || "gateway".equals(args[0]));
+    /** 轻命令白名单（不启动 Spring）。 */
+    private static final Set<String> LIGHT_COMMANDS =
+            Set.of("init", "status", "profile", "provider", "tool");
 
-        if (isLongRunning) {
-            // For serve/gateway: start Spring Boot with web server
-            SpringApplication app = new SpringApplication(OryxOsApplication.class);
-            app.setWebApplicationType(WebApplicationType.SERVLET);
-            app.run(args);
+    public static void main(String[] args) {
+        // 判断是否为轻命令
+        if (args.length > 0 && LIGHT_COMMANDS.contains(args[0])) {
+            // 轻命令：不启动 Spring，直接执行
+            runLightCommand(args);
             return;
         }
 
-        // For short commands: start Spring (non-web), wire Picocli, execute, exit
+        // 重命令：启动 Spring
+        runHeavyCommand(args);
+    }
+
+    /** 执行轻命令（不启动 Spring）。 */
+    private static void runLightCommand(String[] args) {
+        int exitCode = new CommandLine(new OryxOsCli()).execute(args);
+        System.exit(exitCode);
+    }
+
+    /** 执行重命令（启动 Spring）。 */
+    private static void runHeavyCommand(String[] args) {
+        // 判断是否需要 Web 服务器
+        boolean needsWeb = args.length > 0 && "serve".equals(args[0]);
+
         SpringApplication app = new SpringApplication(OryxOsApplication.class);
-        app.setWebApplicationType(WebApplicationType.NONE);
+        app.setWebApplicationType(needsWeb ? WebApplicationType.SERVLET : WebApplicationType.NONE);
+
         try (ConfigurableApplicationContext ctx = app.run(args)) {
+            // 执行启动验证
+            ctx.getBean(StartupVerifier.class).verify();
+
+            // 执行 Picocli 命令
             IFactory factory = new picocli.spring.PicocliSpringFactory(ctx);
             int exitCode = new CommandLine(new OryxOsCli(), factory).execute(args);
+
+            // 对于 serve 命令，不退出（保持运行）
+            if (needsWeb) {
+                return;
+            }
+
             System.exit(exitCode);
         }
     }

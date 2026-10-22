@@ -34,5 +34,8 @@ dist/
 # ===== Logs =====
 *.log
 
+# ===== Test artifacts =====
+test-sessions.db
+
 # ===== Qoder CLI (credentials) =====
 .qoder/
