@@ -134,6 +134,9 @@ public class AgentLoader {
             profile.setSchedules(schedules);
         }
 
+        // 默认通知渠道
+        profile.setDefaultNotifyChannel((String) frontmatter.get("default_notify_channel"));
+
         return profile;
     }
 

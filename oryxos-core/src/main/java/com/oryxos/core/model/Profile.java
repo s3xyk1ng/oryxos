@@ -16,6 +16,7 @@ public class Profile {
     private List<String> channels;
     private List<ScheduleConfig> schedules;
     private Map<String, String> mcpServers;
+    private String defaultNotifyChannel;
     private int maxIterations = 10;
     private int maxHistoryTurns = 20;
 
@@ -47,6 +48,9 @@ public class Profile {
 
     public Map<String, String> getMcpServers() { return mcpServers; }
     public void setMcpServers(Map<String, String> mcpServers) { this.mcpServers = mcpServers; }
+
+    public String getDefaultNotifyChannel() { return defaultNotifyChannel; }
+    public void setDefaultNotifyChannel(String defaultNotifyChannel) { this.defaultNotifyChannel = defaultNotifyChannel; }
 
     public int getMaxIterations() { return maxIterations; }
     public void setMaxIterations(int maxIterations) { this.maxIterations = maxIterations; }
