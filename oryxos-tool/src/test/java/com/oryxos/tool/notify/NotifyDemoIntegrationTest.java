@@ -29,7 +29,7 @@ import static org.mockito.Mockito.*;
  * 端到端 Demo 集成测试：模拟完整链路——
  * "用户：把'测试消息'推送一下" → Agent 调用 notify(content="测试消息") → webhook 收到消息。
  *
- * 使用真实 HttpServer + 真实 WebhookNotifyAdapter + 真实 NotifyTools 编排，
+ * 使用真实 HttpServer + 真实 WebhookNotifyAdapter + 独立 NotifyTool，
  * 仅 mock 存储层（Repository）和安全层（Sandbox）。
  */
 @DisplayName("Notify 端到端 Demo 测试")
@@ -44,7 +44,7 @@ class NotifyDemoIntegrationTest {
 
     private NotifyChannelRepository repo;
     private ToolRegistry toolRegistry;
-    private NotifyTools notifyTools;
+    private NotifyTool notifyTool;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -110,14 +110,13 @@ class NotifyDemoIntegrationTest {
         // Given：Sandbox 放行（mock 不做任何校验）
         Sandbox sandbox = mock(Sandbox.class);
 
-        // 构建真实 NotifyTools + 真实 WebhookNotifyAdapter
+        // 构建独立 NotifyTool + 真实 WebhookNotifyAdapter
         WebhookNotifyAdapter adapter = createRealAdapter(sandbox);
-        notifyTools = new NotifyTools(repo, List.of(adapter), toolRegistry);
-        notifyTools.init();
+        notifyTool = new NotifyTool(repo, List.of(adapter));
 
         // When：Agent 调用 notify（LLM 只传 content，channel 走默认值）
         Map<String, Object> input = Map.of("content", "测试消息");
-        ToolResult result = notifyTools.getNotifyTool().execute(input);
+        ToolResult result = notifyTool.execute(input);
 
         // Then：发送成功
         assertTrue(result.isSuccess(), "notify 应返回成功，实际: " + result.getError());
@@ -149,11 +148,10 @@ class NotifyDemoIntegrationTest {
         ProfileContext.set(new Profile());
 
         WebhookNotifyAdapter adapter = createRealAdapter(null);
-        notifyTools = new NotifyTools(repo, List.of(adapter), toolRegistry);
-        notifyTools.init();
+        notifyTool = new NotifyTool(repo, List.of(adapter));
 
         Map<String, Object> input = Map.of("content", "测试消息", "channel", "nonexistent");
-        ToolResult result = notifyTools.getNotifyTool().execute(input);
+        ToolResult result = notifyTool.execute(input);
 
         assertFalse(result.isSuccess(), "渠道不存在应返回失败");
         assertTrue(result.getError().contains("Channel not found"),
@@ -161,16 +159,15 @@ class NotifyDemoIntegrationTest {
     }
 
     @Test
-    @DisplayName("Demo：渠道表为空 → 工具不注册，LLM 看不到")
+    @DisplayName("Demo：渠道表为空 → isAvailable() 返回 false，不注册")
     void demoNoChannelsNoTool() {
         when(repo.count()).thenReturn(0L);
 
         WebhookNotifyAdapter adapter = createRealAdapter(null);
-        notifyTools = new NotifyTools(repo, List.of(adapter), toolRegistry);
-        notifyTools.init();
+        notifyTool = new NotifyTool(repo, List.of(adapter));
 
-        assertNull(notifyTools.getNotifyTool(),
-                "渠道表为空时 NotifyTool 应为 null（不注册）");
+        assertFalse(notifyTool.isAvailable(),
+                "渠道表为空时 NotifyTool.isAvailable() 应为 false");
     }
 
     @Test
@@ -184,12 +181,11 @@ class NotifyDemoIntegrationTest {
         ProfileContext.set(new Profile());
 
         WebhookNotifyAdapter adapter = createRealAdapter(null);
-        notifyTools = new NotifyTools(repo, List.of(adapter), toolRegistry);
-        notifyTools.init();
+        notifyTool = new NotifyTool(repo, List.of(adapter));
 
         // LLM 明确指定 channel
         Map<String, Object> input = Map.of("content", "部署完成通知", "channel", "dev-group");
-        ToolResult result = notifyTools.getNotifyTool().execute(input);
+        ToolResult result = notifyTool.execute(input);
 
         assertTrue(result.isSuccess());
         assertNotNull(receivedBody);

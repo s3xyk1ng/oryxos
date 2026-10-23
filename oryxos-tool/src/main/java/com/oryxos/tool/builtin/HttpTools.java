@@ -1,9 +1,12 @@
 package com.oryxos.tool.builtin;
 
 import com.oryxos.core.model.OryxTool;
+import com.oryxos.core.model.Sandbox;
+import com.oryxos.core.model.SandboxAction;
 import com.oryxos.core.model.ToolResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
@@ -27,6 +30,13 @@ public class HttpTools {
 
     @Component("httpGetTool")
     public static class HttpGetTool implements OryxTool {
+
+        private final Sandbox sandbox;
+
+        public HttpGetTool(@Autowired(required = false) Sandbox sandbox) {
+            this.sandbox = sandbox;
+        }
+
         @Override
         public String getName() { return "http_get"; }
 
@@ -50,6 +60,13 @@ public class HttpTools {
             if (url == null || url.isBlank()) {
                 return ToolResult.fail("url parameter is required", false);
             }
+            if (sandbox != null) {
+                try {
+                    sandbox.enforce(new SandboxAction(SandboxAction.ActionType.HTTP_REQUEST, url));
+                } catch (SecurityException e) {
+                    return ToolResult.fail("Sandbox rejected: " + e.getMessage(), false);
+                }
+            }
             try {
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(url))
@@ -70,6 +87,13 @@ public class HttpTools {
 
     @Component("httpPostTool")
     public static class HttpPostTool implements OryxTool {
+
+        private final Sandbox sandbox;
+
+        public HttpPostTool(@Autowired(required = false) Sandbox sandbox) {
+            this.sandbox = sandbox;
+        }
+
         @Override
         public String getName() { return "http_post"; }
 
@@ -94,6 +118,13 @@ public class HttpTools {
             String body = (String) input.getOrDefault("body", "");
             if (url == null || url.isBlank()) {
                 return ToolResult.fail("url parameter is required", false);
+            }
+            if (sandbox != null) {
+                try {
+                    sandbox.enforce(new SandboxAction(SandboxAction.ActionType.HTTP_REQUEST, url));
+                } catch (SecurityException e) {
+                    return ToolResult.fail("Sandbox rejected: " + e.getMessage(), false);
+                }
             }
             try {
                 HttpRequest request = HttpRequest.newBuilder()

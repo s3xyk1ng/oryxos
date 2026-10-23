@@ -1,9 +1,12 @@
 package com.oryxos.tool.builtin;
 
 import com.oryxos.core.model.OryxTool;
+import com.oryxos.core.model.Sandbox;
+import com.oryxos.core.model.SandboxAction;
 import com.oryxos.core.model.ToolResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
@@ -25,6 +28,12 @@ public class ShellTools {
 
     @Component("shellTool")
     public static class ShellTool implements OryxTool {
+
+        private final Sandbox sandbox;
+
+        public ShellTool(@Autowired(required = false) Sandbox sandbox) {
+            this.sandbox = sandbox;
+        }
 
         @Override
         public String getName() { return "shell"; }
@@ -58,6 +67,14 @@ public class ShellTools {
             String command = (String) input.get("command");
             if (command == null || command.isBlank()) {
                 return ToolResult.fail("command parameter is required", false);
+            }
+
+            if (sandbox != null) {
+                try {
+                    sandbox.enforce(new SandboxAction(SandboxAction.ActionType.SHELL_COMMAND, command));
+                } catch (SecurityException e) {
+                    return ToolResult.fail("Sandbox rejected: " + e.getMessage(), false);
+                }
             }
 
             List<String> argList = (List<String>) input.getOrDefault("args", List.of());

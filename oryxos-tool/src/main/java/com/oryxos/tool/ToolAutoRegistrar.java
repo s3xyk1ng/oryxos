@@ -1,6 +1,7 @@
 package com.oryxos.tool;
 
 import com.oryxos.core.agent.ToolRegistry;
+import com.oryxos.core.model.ConditionalTool;
 import com.oryxos.core.model.OryxTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +9,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,8 +30,21 @@ public class ToolAutoRegistrar implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        toolRegistry.registerAll(tools);
-        log.info("Auto-registered {} tools: {}", tools.size(),
-                tools.stream().map(OryxTool::getName).toList());
+        List<OryxTool> available = new ArrayList<>();
+        for (OryxTool tool : tools) {
+            if (tool instanceof ConditionalTool conditional) {
+                if (conditional.isAvailable()) {
+                    available.add(tool);
+                    log.info("Conditional tool '{}' is available, registering", tool.getName());
+                } else {
+                    log.info("Conditional tool '{}' is NOT available, skipping", tool.getName());
+                }
+            } else {
+                available.add(tool);
+            }
+        }
+        toolRegistry.registerAll(available);
+        log.info("Auto-registered {} tools: {}", available.size(),
+                available.stream().map(OryxTool::getName).toList());
     }
 }

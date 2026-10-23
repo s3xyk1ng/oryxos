@@ -66,9 +66,20 @@ public class ReActLoop {
             // Execute each tool call
             for (ToolCallRequest tc : toolCalls) {
                 log.debug("Executing tool: {} (iteration {})", tc.getToolName(), iteration + 1);
-                ToolResult result = toolExecutor.execute(session, tc, tools);
-                String resultContent = result.isSuccess() ? result.getContent() : "Error: " + result.getError();
-                session.addMessage(new Message("tool", "[" + tc.getToolName() + "] " + resultContent));
+                try {
+                    ToolResult result = toolExecutor.execute(session, tc, tools);
+                    String resultContent;
+                    if (result.isSuccess()) {
+                        resultContent = result.getContent();
+                    } else {
+                        String signal = result.isRetryable() ? "[retryable] " : "[not retryable] ";
+                        resultContent = signal + "Error: " + result.getError();
+                    }
+                    session.addMessage(new Message("tool", "[" + tc.getToolName() + "] " + resultContent));
+                } catch (Exception e) {
+                    log.error("Tool {} failed unexpectedly: {}", tc.getToolName(), e.getMessage());
+                    session.addMessage(new Message("tool", "[" + tc.getToolName() + "] [retryable] Error: " + e.getMessage()));
+                }
             }
         }
 

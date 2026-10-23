@@ -1,9 +1,12 @@
 package com.oryxos.tool.builtin;
 
 import com.oryxos.core.model.OryxTool;
+import com.oryxos.core.model.Sandbox;
+import com.oryxos.core.model.SandboxAction;
 import com.oryxos.core.model.ToolResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -24,6 +27,13 @@ public class FileTools {
 
     @Component("readFileTool")
     public static class ReadFileTool implements OryxTool {
+
+        private final Sandbox sandbox;
+
+        public ReadFileTool(@Autowired(required = false) Sandbox sandbox) {
+            this.sandbox = sandbox;
+        }
+
         @Override
         public String getName() { return "read_file"; }
 
@@ -47,6 +57,13 @@ public class FileTools {
             if (path == null || path.isBlank()) {
                 return ToolResult.fail("path parameter is required", false);
             }
+            if (sandbox != null) {
+                try {
+                    sandbox.enforce(new SandboxAction(SandboxAction.ActionType.FILE_READ, path));
+                } catch (SecurityException e) {
+                    return ToolResult.fail("Sandbox rejected: " + e.getMessage(), false);
+                }
+            }
             try {
                 Path p = Path.of(path);
                 if (!Files.exists(p)) {
@@ -65,6 +82,13 @@ public class FileTools {
 
     @Component("writeFileTool")
     public static class WriteFileTool implements OryxTool {
+
+        private final Sandbox sandbox;
+
+        public WriteFileTool(@Autowired(required = false) Sandbox sandbox) {
+            this.sandbox = sandbox;
+        }
+
         @Override
         public String getName() { return "write_file"; }
 
@@ -90,6 +114,13 @@ public class FileTools {
             if (path == null || path.isBlank()) {
                 return ToolResult.fail("path parameter is required", false);
             }
+            if (sandbox != null) {
+                try {
+                    sandbox.enforce(new SandboxAction(SandboxAction.ActionType.FILE_WRITE, path));
+                } catch (SecurityException e) {
+                    return ToolResult.fail("Sandbox rejected: " + e.getMessage(), false);
+                }
+            }
             if (content == null) content = "";
             try {
                 Path p = Path.of(path);
@@ -104,6 +135,13 @@ public class FileTools {
 
     @Component("listDirTool")
     public static class ListDirTool implements OryxTool {
+
+        private final Sandbox sandbox;
+
+        public ListDirTool(@Autowired(required = false) Sandbox sandbox) {
+            this.sandbox = sandbox;
+        }
+
         @Override
         public String getName() { return "list_dir"; }
 
@@ -125,6 +163,13 @@ public class FileTools {
         @Override
         public ToolResult execute(Map<String, Object> input) {
             String path = (String) input.getOrDefault("path", ".");
+            if (sandbox != null) {
+                try {
+                    sandbox.enforce(new SandboxAction(SandboxAction.ActionType.FILE_READ, path));
+                } catch (SecurityException e) {
+                    return ToolResult.fail("Sandbox rejected: " + e.getMessage(), false);
+                }
+            }
             try {
                 Path p = Path.of(path);
                 if (!Files.isDirectory(p)) {
