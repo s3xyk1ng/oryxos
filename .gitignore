@@ -36,3 +36,5 @@ dist/
 
 # ===== Qoder CLI (credentials) =====
 .qoder/
+
+*.db
