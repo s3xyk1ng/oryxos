@@ -1,7 +1,7 @@
 package com.oryxos.web.controller;
 
 import com.oryxos.memory.LongTermMemoryStore;
-import com.oryxos.memory.MemoryService;
+import com.oryxos.memory.MemoryContent;
 import com.oryxos.web.dto.ApiResponse;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,14 +12,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/memory")
 public class MemoryApiController {
 
-    private final MemoryService memoryService;
+    private final LongTermMemoryStore longTermMemoryStore;
 
-    public MemoryApiController(MemoryService memoryService) {
-        this.memoryService = memoryService;
+    public MemoryApiController(LongTermMemoryStore longTermMemoryStore) {
+        this.longTermMemoryStore = longTermMemoryStore;
     }
 
     @GetMapping
-    public ApiResponse<LongTermMemoryStore.MemoryContent> getMemory() {
-        return ApiResponse.ok(memoryService.getLongTermMemory());
+    public ApiResponse<MemoryContent> getMemory() {
+        return ApiResponse.ok(longTermMemoryStore.load());
     }
 }

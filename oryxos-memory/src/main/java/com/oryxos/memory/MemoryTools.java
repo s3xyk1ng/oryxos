@@ -2,8 +2,6 @@ package com.oryxos.memory;
 
 import com.oryxos.core.model.OryxTool;
 import com.oryxos.core.model.ToolResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
@@ -25,13 +23,15 @@ public class MemoryTools {
     @Component("saveMemoryTool")
     public class SaveMemoryTool implements OryxTool {
         @Override
-        public String getName() { return "save_memory"; }
+        public String getName() {
+            return "save_memory";
+        }
 
         @Override
         public String getDescription() {
             return "Save a piece of information to long-term memory. "
-                    + "Use scope 'CORE' for critical facts that should never be forgotten, "
-                    + "or 'ARCHIVAL' (default) for general reference information.";
+                    + "You must explicitly choose scope 'CORE' for critical facts that should always be visible, "
+                    + "or 'ARCHIVAL' for general reference information that can be recalled on demand.";
         }
 
         @Override
@@ -42,10 +42,10 @@ public class MemoryTools {
             props.put("content", Map.of("type", "string",
                     "description", "The information to save"));
             props.put("scope", Map.of("type", "string",
-                    "description", "Memory scope: CORE or ARCHIVAL (default: ARCHIVAL)",
+                    "description", "Memory scope: CORE or ARCHIVAL (required, no default)",
                     "enum", List.of("CORE", "ARCHIVAL")));
             schema.put("properties", props);
-            schema.put("required", List.of("content"));
+            schema.put("required", List.of("content", "scope"));
             return schema;
         }
 
@@ -55,12 +55,15 @@ public class MemoryTools {
             if (content == null || content.isBlank()) {
                 return ToolResult.fail("content parameter is required", false);
             }
-            String scopeStr = (String) input.getOrDefault("scope", "ARCHIVAL");
-            LongTermMemoryStore.Scope scope;
+            String scopeStr = (String) input.get("scope");
+            if (scopeStr == null || scopeStr.isBlank()) {
+                return ToolResult.fail("scope parameter is required (CORE or ARCHIVAL)", false);
+            }
+            MemoryScope scope;
             try {
-                scope = LongTermMemoryStore.Scope.valueOf(scopeStr.toUpperCase());
+                scope = MemoryScope.valueOf(scopeStr.toUpperCase());
             } catch (IllegalArgumentException e) {
-                scope = LongTermMemoryStore.Scope.ARCHIVAL;
+                return ToolResult.fail("scope must be CORE or ARCHIVAL", false);
             }
             memoryService.saveMemory(content, scope);
             return ToolResult.ok("Memory saved (" + scope + "): " + content);
@@ -70,11 +73,13 @@ public class MemoryTools {
     @Component("recallMemoryTool")
     public class RecallMemoryTool implements OryxTool {
         @Override
-        public String getName() { return "recall_memory"; }
+        public String getName() {
+            return "recall_memory";
+        }
 
         @Override
         public String getDescription() {
-            return "Search long-term memory by keyword. Returns matching memory entries.";
+            return "Search archival long-term memory by keyword. Returns matching memory entries.";
         }
 
         @Override

@@ -1,6 +1,5 @@
 package com.oryxos.memory;
 
-import com.oryxos.core.agent.SessionManager;
 import com.oryxos.core.model.Message;
 import com.oryxos.core.model.Session;
 import org.slf4j.Logger;
@@ -10,8 +9,11 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 记忆服务（统一门面）：对 ReAct 循环暴露统一接口。
- * 内部委托 SessionManager（会话记忆）+ LongTermMemoryStore（长期记忆）。
+ * 记忆服务统一门面。
+ * 对上层 ReActLoop / PromptBuilder 暴露三类能力：
+ * ① 组装 Prompt 上下文（完整 CORE + 当前会话历史，不含 ARCHIVAL）
+ * ② 保存记忆（Agent 显式指定 CORE / ARCHIVAL）
+ * ③ 按关键词召回归档记忆
  */
 @Service
 public class MemoryService {
@@ -19,26 +21,23 @@ public class MemoryService {
     private static final Logger log = LoggerFactory.getLogger(MemoryService.class);
 
     private final LongTermMemoryStore longTermStore;
-    private final SessionManager sessionManager;
 
-    public MemoryService(LongTermMemoryStore longTermStore, SessionManager sessionManager) {
+    public MemoryService(LongTermMemoryStore longTermStore) {
         this.longTermStore = longTermStore;
-        this.sessionManager = sessionManager;
     }
 
     /**
-     * 获取指定 Session 的记忆上下文（会话历史 + 长期记忆），用于注入 Prompt。
+     * 组装 Prompt 上下文：只自动包含完整 CORE 和当前会话历史。
+     * ARCHIVAL 不自动注入，必须由 Agent 通过 recall_memory 按需召回。
      */
-    public String getContext(Session session) {
+    public String buildPromptContext(Session session) {
         StringBuilder sb = new StringBuilder();
 
-        // Long-term memory
-        LongTermMemoryStore.MemoryContent memory = longTermStore.load();
-        if (!memory.isEmpty()) {
-            sb.append(memory.toPromptString()).append("\n\n");
+        MemoryContent memory = longTermStore.load();
+        if (!memory.coreSection().isBlank()) {
+            sb.append("## Core Memory\n").append(memory.coreSection()).append("\n\n");
         }
 
-        // Session conversation history
         List<Message> messages = session.getMessages();
         if (!messages.isEmpty()) {
             sb.append("## Conversation History\n");
@@ -47,33 +46,34 @@ public class MemoryService {
             }
         }
 
-        return sb.toString().trim();
+        String result = sb.toString().trim();
+        log.debug("Built prompt context, core length={}, history messages={}",
+                memory.coreSection().length(), messages.size());
+        return result;
     }
 
     /**
-     * 保存记忆。
+     * 保存记忆。scope 必须由 Agent 显式指定，禁止默认或推断。
      */
-    public void saveMemory(String content, LongTermMemoryStore.Scope scope) {
+    public void saveMemory(String content, MemoryScope scope) {
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("Memory content must not be blank");
+        }
+        if (scope == null) {
+            throw new IllegalArgumentException("Memory scope must be explicitly CORE or ARCHIVAL");
+        }
         longTermStore.append(content, scope);
-        log.info("Saved {} memory: {}", scope, truncate(content, 60));
+        log.info("Memory save delegated: scope={}", scope);
     }
 
     /**
-     * 按关键词检索记忆。
+     * 按关键词召回归档记忆。
      */
-    public List<String> recallMemory(String query) {
-        return longTermStore.recallByKeyword(query);
+    public List<String> recallMemory(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            throw new IllegalArgumentException("Keyword must not be blank");
+        }
+        return longTermStore.recallByKeyword(keyword);
     }
 
-    /**
-     * 获取长期记忆内容。
-     */
-    public LongTermMemoryStore.MemoryContent getLongTermMemory() {
-        return longTermStore.load();
-    }
-
-    private String truncate(String s, int maxLen) {
-        if (s == null) return "";
-        return s.length() <= maxLen ? s : s.substring(0, maxLen) + "...";
-    }
 }

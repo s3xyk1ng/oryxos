@@ -9,6 +9,7 @@ public class TaskExecutionEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(columnDefinition = "INTEGER")
     private Long id;
 
     @Column(name = "task_key", length = 128, nullable = false)

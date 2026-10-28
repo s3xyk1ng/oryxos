@@ -12,6 +12,7 @@ public class NotifyChannelEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(columnDefinition = "INTEGER")
     private Long id;
 
     @Column(name = "name", length = 64, nullable = false, unique = true)

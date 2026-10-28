@@ -23,6 +23,7 @@ desktop.ini
 # ===== Runtime =====
 .oryxos/
 logs/
+*.db
 
 # ===== Node (site) =====
 node_modules/

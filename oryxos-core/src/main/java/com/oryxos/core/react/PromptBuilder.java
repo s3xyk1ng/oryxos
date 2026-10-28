@@ -72,11 +72,11 @@ public class PromptBuilder {
         sb.append("Current time: ")
                 .append(ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME));
 
-        // Memory injection (if available)
+        // Memory injection (CORE only; conversation history is added in buildChatPrompt)
         if (memoryPort != null) {
-            String memoryContext = memoryPort.getMemoryContext();
+            String memoryContext = memoryPort.buildMemoryContext(session);
             if (memoryContext != null && !memoryContext.isBlank()) {
-                sb.append("\n\n").append(memoryContext);
+                sb.append("\n\n## Core Memory\n").append(memoryContext);
             }
         }
 

@@ -9,6 +9,7 @@ public class LlmCallEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(columnDefinition = "INTEGER")
     private Long id;
 
     @Column(name = "session_id", length = 64, nullable = false)

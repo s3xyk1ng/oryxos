@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 CREATE TABLE IF NOT EXISTS tool_invocations (
-    id            BIGINT       PRIMARY KEY AUTOINCREMENT,
+    id            INTEGER      PRIMARY KEY AUTOINCREMENT,
     session_id    VARCHAR(64)  NOT NULL,
     tool_name     VARCHAR(64)  NOT NULL,
     input_json    TEXT         NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS tool_invocations (
 );
 
 CREATE TABLE IF NOT EXISTS llm_calls (
-    id                 BIGINT       PRIMARY KEY AUTOINCREMENT,
+    id                 INTEGER      PRIMARY KEY AUTOINCREMENT,
     session_id         VARCHAR(64)  NOT NULL,
     provider           VARCHAR(32)  NOT NULL,
     model              VARCHAR(64)  NOT NULL,
